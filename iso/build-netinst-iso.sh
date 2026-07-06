@@ -16,7 +16,7 @@ set -e
 
 DEBIAN_ISO_URL="https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.5.0-amd64-netinst.iso"
 DEBIAN_ISO="/root/debian-netinst.iso"
-PRESEED_URL="https://raw.githubusercontent.com/matthewc00002/urrunberri1/iso/iso/preseed.cfg"
+PRESEED_URL="https://raw.githubusercontent.com/openemasarl/urrunberri1/iso/iso/preseed.cfg"
 OUTPUT_ISO="/root/urrunberri-os.iso"
 WORK_DIR="/root/iso-work"
 
