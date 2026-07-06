@@ -18,7 +18,7 @@ set -e
 WORK_DIR="/tmp/urrunberri-offline-build"
 PROFILE_DIR="$WORK_DIR/profiles"
 OUTPUT_DIR="$WORK_DIR/images"
-GITHUB_RAW="https://raw.githubusercontent.com/matthewc00002/urrunberri1"
+GITHUB_RAW="https://raw.githubusercontent.com/openemasarl/urrunberri1"
 BRANCH="test"
 
 echo "=================================================="
