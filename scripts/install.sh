@@ -3,13 +3,13 @@
 #  UrrunBerri OS — Install Script
 #  Debian 13 Trixie — Root autologin — xfreerdp3
 #  Author : Mathieu Cadi — Openema SARL
-#  GitHub : https://github.com/matthewc00002/urrunberri1
+#  GitHub : https://github.com/openemasarl/urrunberri1
 #  Branch : test (GTK WebView — sans Firefox)
 # =============================================================================
 
 set -e
 
-GITHUB_RAW="https://raw.githubusercontent.com/matthewc00002/urrunberri1/test"
+GITHUB_RAW="https://raw.githubusercontent.com/openemasarl/urrunberri1/iso"
 INSTALL_DIR="/opt/urrunberri-os"
 
 info()  { echo "[UrrunBerri OS] $1"; }
