@@ -69,7 +69,7 @@ def sanitize_port(port):
 def sanitize_protocol(proto):
     """Only allow known protocols."""
     proto = str(proto).strip().lower()
-    if proto in ('rdp', 'vnc', 'ssh', 'web'):
+    if proto in ('rdp', 'vnc', 'ssh'):
         return proto
     return 'rdp'
 
@@ -105,9 +105,7 @@ def sanitize_connect_data(raw_data):
     multimon   = sanitize_flag(parts[8])
     usb        = sanitize_flag(parts[9])
 
-    if not host:
-        return None
-    if not user and protocol != 'web':
+    if not host or not user:
         return None
 
     return f"{host}|{port}|{user}|{password}|{domain}|{field5}|{protocol}|{resolution}|{multimon}|{usb}"
