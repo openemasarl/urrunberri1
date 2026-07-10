@@ -3,13 +3,13 @@
 #  UrrunBerri OS — Install Script
 #  Debian 13 Trixie — Root autologin — xfreerdp3
 #  Author : Mathieu Cadi — Openema SARL
-#  GitHub : https://github.com/matthewc00002/urrunberri1
-#  Branch : test (GTK WebView — sans Firefox)
+#  GitHub : https://github.com/openemasarl/urrunberri1
+#  Branch : main
 # =============================================================================
 
 set -e
 
-GITHUB_RAW="https://raw.githubusercontent.com/matthewc00002/urrunberri1/test"
+GITHUB_RAW="https://raw.githubusercontent.com/openemasarl/urrunberri1/main"
 INSTALL_DIR="/opt/urrunberri-os"
 
 info()  { echo "[UrrunBerri OS] $1"; }
@@ -18,7 +18,7 @@ error() { echo "[ERREUR] $1"; exit 1; }
 [[ $EUID -ne 0 ]] && error "Lancez ce script en root : bash install.sh"
 
 info "=== UrrunBerri OS — Installation Debian 13 Trixie ==="
-info "=== Branche : test (GTK WebView) ==="
+info "=== Branche : main (GTK WebView) ==="
 
 # ── PACKAGES ──────────────────────────────────────────────────────────────────
 info "Installation des paquets..."
@@ -78,9 +78,9 @@ INSTALL_DATE=$(date '+%Y-%m-%d %H:%M:%S')
 cat > /etc/urrunberri-os/version << VERSIONEOF
 version=$APP_VERSION
 date_installation=$INSTALL_DATE
-branche=test
+branche=main
 VERSIONEOF
-info "Version installee : $APP_VERSION ($INSTALL_DATE) [branche test]"
+info "Version installee : $APP_VERSION ($INSTALL_DATE) [branche main]"
 
 # ── OPENBOX FOR ROOT ──────────────────────────────────────────────────────────
 mkdir -p /root/.config/openbox
@@ -94,12 +94,10 @@ sleep 2
 bash /opt/urrunberri-os/scripts/boot.sh
 AUTOSTART
 chmod +x /root/.config/openbox/autostart
-# ── OPENBOX RC.XML (disable menus and shortcuts) ─────────────────────────────
 
-# Remove any custom rc.xml — use openbox defaults for working window buttons
+# ── OPENBOX RC.XML (disable menus and shortcuts) ─────────────────────────────
 rm -f /root/.config/openbox/rc.xml
 
-# Empty menu file — no right-click menu on desktop
 cat > /root/.config/openbox/menu.xml << 'MENUXML'
 <?xml version="1.0" encoding="UTF-8"?>
 <openbox_menu xmlns="http://openbox.org/3.4/menu">
@@ -108,7 +106,6 @@ cat > /root/.config/openbox/menu.xml << 'MENUXML'
 </openbox_menu>
 MENUXML
 info "Menu desktop vide configure"
-
 info "Openbox configure pour root"
 
 # ── LIGHTDM ROOT AUTOLOGIN ────────────────────────────────────────────────────
@@ -139,7 +136,7 @@ sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
 grep -q "PermitRootLogin yes" /etc/ssh/sshd_config || echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 
 # ── DOWNLOAD APP FILES ────────────────────────────────────────────────────────
-info "Telechargement des fichiers depuis GitHub (branche test)..."
+info "Telechargement des fichiers depuis GitHub (branche main)..."
 curl -fsSL "$GITHUB_RAW/scripts/boot.sh" -o "$INSTALL_DIR/scripts/boot.sh"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_server.py" -o "$INSTALL_DIR/scripts/urrunberri_server.py"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_launcher.py" -o "$INSTALL_DIR/scripts/urrunberri_launcher.py"
@@ -176,7 +173,7 @@ systemctl enable getty@tty2.service
 systemctl start getty@tty2.service
 systemctl daemon-reload
 
-info "=== Installation terminee (branche test — GTK WebView) ==="
+info "=== Installation terminee (branche main) ==="
 info "Version : $APP_VERSION"
 info "Redemarrez avec : reboot"
 info "SSH root : ssh root@IP (PermitRootLogin active)"
