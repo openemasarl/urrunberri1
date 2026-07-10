@@ -258,6 +258,7 @@ input:focus { border-color: #2352be; background: #fff; }
           <option value="rdp">RDP</option>
           <option value="vnc">VNC</option>
           <option value="ssh">SSH</option>
+          <option value="web">Web</option>
         </select>
       </div>
       <div class="field short">
@@ -340,8 +341,12 @@ function setLang(l) {
 }
 function onProtocolChange() {
   const proto = document.getElementById('protocol').value;
-  const defaults = { rdp:'3389', vnc:'5900', ssh:'22' };
-  document.getElementById('port').value = defaults[proto] || '3389';
+  const defaults = { rdp:'3389', vnc:'5901', ssh:'22', web:'443' };
+  const portField = document.getElementById('port');
+  const cur = portField.value.trim();
+  if (!cur || Object.values(defaults).includes(cur)) {
+    portField.value = defaults[proto] || '3389';
+  }
   const rdpOnly = proto === 'rdp';
   document.getElementById('resolution').parentElement.style.opacity = rdpOnly ? '1' : '0.35';
   document.getElementById('multimon-row').style.opacity = rdpOnly ? '1' : '0.35';
@@ -453,7 +458,7 @@ function connect() {
   const res = document.getElementById('resolution').value;
   const multimon = document.getElementById('multimon').checked ? '1' : '0';
   const usb = document.getElementById('usb').checked ? '1' : '0';
-  if (!ip || !user) { document.getElementById('error-msg').style.display='block'; return; }
+  if (!ip || (!user && protocol !== 'web')) { document.getElementById('error-msg').style.display='block'; return; }
   document.getElementById('error-msg').style.display='none';
   const btn = document.getElementById('btn-connect');
   btn.classList.add('loading');

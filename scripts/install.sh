@@ -38,6 +38,7 @@ apt-get install -y \
     gir1.2-webkit2-4.1 \
     freerdp3-x11 \
     tigervnc-viewer \
+    tigervnc-tools \
     openssh-server \
     netcat-openbsd \
     x11-xserver-utils \
@@ -46,6 +47,14 @@ apt-get install -y \
     plymouth-themes \
     curl
 info "Paquets installes"
+
+# ── CONFIG TIGERVNC (desactive infobulle et dialogue erreur) ──────────────────
+mkdir -p /root/.config/tigervnc
+cat > /root/.config/tigervnc/default << 'VNCEOF'
+ShortcutModifiers=
+AlertOnFatalError=0
+VNCEOF
+info "Configuration TigerVNC appliquee"
 
 # ── SUPPRESSION UNCLUTTER (masquait le curseur souris) ────────────────────────
 apt-get remove -y unclutter 2>/dev/null || true
