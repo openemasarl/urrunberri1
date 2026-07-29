@@ -406,6 +406,9 @@ function onSavedSelect() {
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
     document.getElementById('protocol').value = 'rdp';
+    var gwh = document.getElementById('gw-host'); if(gwh) gwh.value = '';
+    var gwu = document.getElementById('gw-user'); if(gwu) gwu.value = '';
+    var gwp = document.getElementById('gw-pass'); if(gwp) gwp.value = '';
     document.getElementById('resolution').value = 'auto';
     document.getElementById('multimon').checked = false;
     document.getElementById('usb').checked = false;
@@ -416,11 +419,14 @@ function onSavedSelect() {
       document.getElementById('ip').value = c.host || '';
       document.getElementById('port').value = c.port || '3389';
       document.getElementById('username').value = c.user || '';
-      document.getElementById('password').value = '';
+      document.getElementById('password').value = c.password || '';
       document.getElementById('protocol').value = c.protocol || 'rdp';
       document.getElementById('resolution').value = c.resolution || 'auto';
       document.getElementById('multimon').checked = c.multimon == '1';
       onProtocolChange();
+      var gwh = document.getElementById('gw-host'); if(gwh) gwh.value = c.gw_host || '';
+      var gwu = document.getElementById('gw-user'); if(gwu) gwu.value = c.gw_user || '';
+      var gwp = document.getElementById('gw-pass'); if(gwp) gwp.value = c.gw_pass || '';
       document.getElementById('password').focus();
     }
   }
@@ -439,6 +445,7 @@ function saveConnection() {
     gw_host: (document.getElementById('gw-host') || {value:''}).value,
     gw_user: (document.getElementById('gw-user') || {value:''}).value,
     gw_pass: (document.getElementById('gw-pass') || {value:''}).value,
+    password: document.getElementById('password').value,
     resolution: document.getElementById('resolution').value,
     multimon: document.getElementById('multimon').checked ? '1' : '0'
   };

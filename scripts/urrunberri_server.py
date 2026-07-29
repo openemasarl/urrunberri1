@@ -143,7 +143,7 @@ def load_connections():
                     if not line:
                         continue
                     parts = line.split('|')
-                    while len(parts) < 8:
+                    while len(parts) < 12:
                         parts.append('')
                     conns.append({
                         'host':       parts[0],
@@ -153,13 +153,17 @@ def load_connections():
                         'name':       parts[4],
                         'protocol':   parts[5] or 'rdp',
                         'resolution': parts[6] or '1920x1080',
-                        'multimon':   parts[7] or '0'
+                        'multimon':   parts[7] or '0',
+                        'password':   parts[8],
+                        'gw_host':    parts[9],
+                        'gw_user':    parts[10],
+                        'gw_pass':    parts[11]
                     })
     except:
         pass
     return conns
 
-def save_connection(host, port, user, domain='', name='', protocol='rdp', resolution='1920x1080', multimon='0'):
+def save_connection(host, port, user, domain='', name='', protocol='rdp', resolution='1920x1080', multimon='0', password='', gw_host='', gw_user='', gw_pass=''):
     # Sanitize all inputs
     host       = sanitize_host(host)
     port       = sanitize_port(port)
@@ -169,6 +173,10 @@ def save_connection(host, port, user, domain='', name='', protocol='rdp', resolu
     protocol   = sanitize_protocol(protocol)
     resolution = sanitize_resolution(resolution)
     multimon   = sanitize_flag(multimon)
+    password   = sanitize_password(password)
+    gw_host    = sanitize_host(gw_host) if gw_host else ''
+    gw_user    = sanitize(gw_user)
+    gw_pass    = sanitize_password(gw_pass)
 
     if not host or not user:
         return load_connections()
@@ -177,12 +185,14 @@ def save_connection(host, port, user, domain='', name='', protocol='rdp', resolu
     conns.insert(0, {
         'host': host, 'port': port, 'user': user,
         'domain': domain, 'name': name, 'protocol': protocol,
-        'resolution': resolution, 'multimon': multimon
+        'resolution': resolution, 'multimon': multimon,
+        'password': password, 'gw_host': gw_host,
+        'gw_user': gw_user, 'gw_pass': gw_pass
     })
     conns = conns[:10]
     with open(SAVED_FILE, 'w') as f:
         for c in conns:
-            f.write(f"{c['host']}|{c['port']}|{c['user']}|{c['domain']}|{c['name']}|{c['protocol']}|{c['resolution']}|{c['multimon']}\n")
+            f.write(f"{c['host']}|{c['port']}|{c['user']}|{c['domain']}|{c['name']}|{c['protocol']}|{c['resolution']}|{c['multimon']}|{c.get('password','')}|{c.get('gw_host','')}|{c.get('gw_user','')}|{c.get('gw_pass','')}\n")
     return conns
 
 def delete_connection(index):
@@ -195,7 +205,7 @@ def delete_connection(index):
         pass
     with open(SAVED_FILE, 'w') as f:
         for c in conns:
-            f.write(f"{c['host']}|{c['port']}|{c['user']}|{c['domain']}|{c['name']}|{c['protocol']}|{c['resolution']}|{c['multimon']}\n")
+            f.write(f"{c['host']}|{c['port']}|{c['user']}|{c['domain']}|{c['name']}|{c['protocol']}|{c['resolution']}|{c['multimon']}|{c.get('password','')}|{c.get('gw_host','')}|{c.get('gw_user','')}|{c.get('gw_pass','')}\n")
     return conns
 
 
@@ -288,7 +298,11 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
                 name       = data.get('name', ''),
                 protocol   = data.get('protocol', 'rdp'),
                 resolution = data.get('resolution', '1920x1080'),
-                multimon   = data.get('multimon', '0')
+                multimon   = data.get('multimon', '0'),
+                password   = data.get('password', ''),
+                gw_host    = data.get('gw_host', ''),
+                gw_user    = data.get('gw_user', ''),
+                gw_pass    = data.get('gw_pass', '')
             )
             self.send_json({'ok': True, 'connections': conns})
             return
