@@ -181,6 +181,11 @@ mkdir -p /root/install /root/uninstall
 curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/test/scripts/admin/install.sh -o /root/install/urrunberri.sh
 curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/test/scripts/admin/uninstall.sh -o /root/uninstall/urrunberri.sh
 chmod +x /root/install/urrunberri.sh /root/uninstall/urrunberri.sh
+# Restauration des connexions sauvegardees
+if [ -f /root/urrunberri-backup/saved_connections.csv ]; then
+    cp /root/urrunberri-backup/saved_connections.csv /etc/urrunberri-os/saved_connections.csv
+    info "Connexions precedentes restaurees depuis /root/urrunberri-backup/"
+fi
 info "Scripts admin disponibles dans /root/install/ et /root/uninstall/"
 info "=== Installation terminee (branche test — GTK WebView) ==="
 info "Version : $APP_VERSION"
