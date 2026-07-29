@@ -69,7 +69,7 @@ def sanitize_port(port):
 def sanitize_protocol(proto):
     """Only allow known protocols."""
     proto = str(proto).strip().lower()
-    if proto in ('rdp', 'vnc', 'ssh'):
+    if proto in ('rdp', 'vnc', 'ssh', 'rdpgw'):
         return proto
     return 'rdp'
 
@@ -91,7 +91,7 @@ def sanitize_connect_data(raw_data):
     Format: host|port|user|pass|||protocol|resolution|multimon|usb
     """
     parts = raw_data.split('|')
-    while len(parts) < 10:
+    while len(parts) < 13:
         parts.append('')
 
     host       = sanitize_host(parts[0])
@@ -108,7 +108,10 @@ def sanitize_connect_data(raw_data):
     if not host or not user:
         return None
 
-    return f"{host}|{port}|{user}|{password}|{domain}|{field5}|{protocol}|{resolution}|{multimon}|{usb}"
+    gw_host = sanitize_host(parts[10]) if parts[10] else ""
+    gw_user = sanitize(parts[11])
+    gw_pass = sanitize_password(parts[12])
+    return f"{host}|{port}|{user}|{password}|{domain}|{field5}|{protocol}|{resolution}|{multimon}|{usb}|{gw_host}|{gw_user}|{gw_pass}"
 
 # ── APPLICATION LOGIC ─────────────────────────────────────────────────────────
 

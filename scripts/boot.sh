@@ -153,6 +153,9 @@ show_login() {
         RES=$(echo "$data"       | cut -d'|' -f8)
         MULTIMON=$(echo "$data"  | cut -d'|' -f9)
         USB=$(echo "$data"       | cut -d'|' -f10)
+        GW_HOST=$(echo "$data"  | cut -d'|' -f11)
+        GW_USER=$(echo "$data"  | cut -d'|' -f12)
+        GW_PASS=$(echo "$data"  | cut -d'|' -f13)
 
         # SECURITY: Validate host and port
         if ! validate_host "$CONN_HOST"; then
@@ -172,7 +175,7 @@ show_login() {
         [[ -z "$PROTOCOL" ]] && PROTOCOL=rdp
         # SECURITY: Only allow known protocols
         case "$PROTOCOL" in
-            rdp|vnc|ssh|web) ;;
+            rdp|vnc|ssh|web|rdpgw) ;;
             *) echo "[UrrunBerri OS] SECURITE: protocole invalide: $PROTOCOL"; return 1 ;;
         esac
 
@@ -250,6 +253,28 @@ numlockx on 2>/dev/null || true
                 "/size:${RESOLUTION}" \
                 /cert:ignore \
                 /clipboard /fonts "/kbd:layout:${KBD_LAYOUT}" \
+                ${MULTIMON_ARG} \
+                ${USB_ARG} \
+                /log-level:ERROR &
+            RDP_PID=$!
+            ;;
+        rdpgw)
+            GW_ARGS=()
+            if [[ -n "$GW_HOST" ]]; then
+                GW_STR="g:${GW_HOST},u:${GW_USER},p:${GW_PASS},type:http,extauth-sspi-ntlm"
+                GW_ARGS+=("/gateway:${GW_STR}")
+
+
+            fi
+            "$XFREERDP_BIN" \
+                "/v:${CONN_HOST}:${CONN_PORT}" \
+                "/u:${USERNAME}" \
+                "/p:${PASSWORD}" \
+                ${DOMAIN_ARG} \
+                "/size:${RESOLUTION}" \
+                /cert:ignore \
+                /clipboard /fonts "/kbd:layout:${KBD_LAYOUT}" \
+                "${GW_ARGS[@]}" \
                 ${MULTIMON_ARG} \
                 ${USB_ARG} \
                 /log-level:ERROR &

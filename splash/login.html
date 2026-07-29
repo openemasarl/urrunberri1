@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>UrrunBerri OS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #eef2f7;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(35,82,190,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 85% 85%, rgba(35,82,190,0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+.card {
+  background: #ffffff;
+  border: 1.5px solid rgba(35,82,190,0.15);
+  border-radius: 24px;
+  padding: 32px 44px;
+  width: 500px;
+  box-shadow: 0 8px 40px rgba(35,82,190,0.1);
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 0.6s ease;
+}
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.logo-wrap { text-align: center; margin-bottom: 22px; }
+.logo-wrap img {
+  width: 220px; height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 16px rgba(35,82,190,0.15));
+}
+.section-label {
+  font-size: 11px; font-weight: 600;
+  color: #2352be;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.saved-wrap { margin-bottom: 14px; }
+.saved-actions { display: flex; gap: 6px; margin-top: 6px; }
+.btn-small {
+  flex: 1; padding: 7px 10px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid rgba(35,82,190,0.25);
+  background: rgba(35,82,190,0.06);
+  color: #2352be;
+  transition: all 0.2s;
+}
+.btn-small:hover { background: rgba(35,82,190,0.15); }
+.btn-small.danger {
+  border-color: rgba(220,53,69,0.3);
+  background: rgba(220,53,69,0.06);
+  color: #dc3545;
+}
+.btn-small.danger:hover { background: rgba(220,53,69,0.15); }
+select {
+  width: 100%; padding: 11px 14px;
+  background: #f0f4fb;
+  border: 1.5px solid rgba(35,82,190,0.2);
+  border-radius: 10px;
+  color: #1a2744;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  outline: none; cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%232352be' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: border-color 0.2s;
+}
+select:focus { border-color: #2352be; }
+select option { background: #fff; color: #1a2744; }
+.divider {
+  display: flex; align-items: center;
+  gap: 10px; margin: 14px 0;
+  color: #8a9ab8; font-size: 11px;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: rgba(35,82,190,0.12);
+}
+.fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.row { display: flex; gap: 10px; }
+.row .field { flex: 1; }
+.row .field.port { flex: 0 0 90px; }
+.row .field.short { flex: 0 0 150px; }
+.field label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: #5a6a8a;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 5px;
+}
+input {
+  width: 100%; padding: 11px 14px;
+  background: #f0f4fb;
+  border: 1.5px solid rgba(35,82,190,0.18);
+  border-radius: 10px; color: #1a2744;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+input::placeholder { color: #8a9ab8; }
+input:focus { border-color: #2352be; background: #fff; }
+.check-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 2px;
+}
+.check-row input[type=checkbox] {
+  width: 16px; height: 16px;
+  accent-color: #2352be;
+  cursor: pointer; flex-shrink: 0;
+}
+.check-row label {
+  font-size: 12px; color: #5a6a8a;
+  text-transform: none; letter-spacing: 0;
+  cursor: pointer; margin-bottom: 0;
+}
+.btn-row { display: flex; gap: 8px; }
+.btn-connect {
+  flex: 2; padding: 13px;
+  background: #2352be;
+  border: none; border-radius: 10px; color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(35,82,190,0.3);
+}
+.btn-connect:hover {
+  background: #1a3d9e;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(35,82,190,0.4);
+}
+.btn-connect:active { transform: translateY(0); }
+.btn-stop {
+  flex: 1; padding: 13px;
+  background: #dc3545;
+  border: none;
+  border-radius: 10px; color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-stop:hover { background: #b02a37; }
+.btn-restart {
+  flex: 1; padding: 13px;
+  background: #e67e00;
+  border: none;
+  border-radius: 10px; color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-restart:hover { background: #c46e00; }
+.error {
+  display: none;
+  background: rgba(220,53,69,0.08);
+  border: 1px solid rgba(220,53,69,0.25);
+  border-radius: 8px; color: #dc3545;
+  font-size: 12px; padding: 8px 12px;
+  margin-bottom: 12px; text-align: center;
+}
+.success {
+  display: none;
+  background: rgba(39,174,96,0.08);
+  border: 1px solid rgba(39,174,96,0.25);
+  border-radius: 8px; color: #27ae60;
+  font-size: 12px; padding: 8px 12px;
+  margin-bottom: 12px; text-align: center;
+}
+.langs {
+  display: flex; justify-content: center;
+  gap: 6px; margin-top: 16px;
+}
+.lang-btn {
+  padding: 4px 10px; border-radius: 16px;
+  background: #f0f4fb;
+  border: 1px solid rgba(35,82,190,0.2);
+  color: #5a6a8a;
+  font-size: 11px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.lang-btn.active, .lang-btn:hover {
+  background: #2352be; color: #fff; border-color: #2352be;
+}
+.version {
+  position: absolute; bottom: 12px; right: 16px;
+  font-size: 10px; color: #8a9ab8;
+}
+.btn-connect.loading {
+  background: rgba(35,82,190,0.4);
+  cursor: not-allowed; transform: none;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-wrap">
+    <img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS" />
+  </div>
+  <div class="saved-wrap" id="saved-wrap" style="display:none">
+    <div class="section-label" id="lbl-recent">Connexions recentes</div>
+    <select id="saved-select" onchange="onSavedSelect()"></select>
+    <div class="saved-actions">
+      <button class="btn-small" onclick="saveConnection()" id="btn-save">💾 Sauvegarder</button>
+      <button class="btn-small danger" onclick="deleteConnection()" id="btn-delete">🗑 Supprimer</button>
+    </div>
+  </div>
+  <div id="saved-wrap-empty" style="display:none; margin-bottom:14px;">
+    <div class="section-label">Connexions recentes</div>
+    <div class="saved-actions">
+      <button class="btn-small" onclick="saveConnection()" id="btn-save2">💾 Sauvegarder cette connexion</button>
+    </div>
+  </div>
+  <div class="divider" id="divider" style="display:none">ou nouvelle connexion</div>
+  <div class="error" id="error-msg">Veuillez renseigner l'adresse IP / DNS et le nom d'utilisateur.</div>
+  <div class="success" id="success-msg">Connexion sauvegardee.</div>
+  <div class="fields">
+    <div class="row">
+      <div class="field">
+        <label id="lbl-ip">Adresse IP / DNS</label>
+        <input type="text" id="ip" placeholder="192.168.1.10 ou serveur.local" autocomplete="off" />
+      </div>
+      <div class="field port">
+        <label id="lbl-port">Port</label>
+        <input type="text" id="port" value="3389" />
+      </div>
+    </div>
+    <div class="field">
+      <label id="lbl-user">Utilisateur</label>
+      <input type="text" id="username" placeholder="rdpuser" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label id="lbl-pass">Mot de passe</label>
+      <input type="password" id="password" placeholder="••••••••" />
+    </div>
+    <div class="row">
+      <div class="field">
+        <label id="lbl-proto">Protocole</label>
+        <select id="protocol" onchange="onProtocolChange()">
+          <option value="rdp">RDP</option>
+          <option value="rdpgw">RDP Gateway</option>
+          <option value="vnc">VNC</option>
+          <option value="ssh">SSH</option>
+          <option value="web">Web</option>
+        </select>
+      </div>
+      <div class="field short">
+        <label id="lbl-res">Resolution</label>
+        <select id="resolution">
+          <option value="auto">Auto</option>
+          <option value="1920x1080">1920x1080</option>
+          <option value="1280x720">1280x720</option>
+          <option value="1600x900">1600x900</option>
+          <option value="1366x768">1366x768</option>
+          <option value="2560x1440">2560x1440</option>
+        </select>
+      </div>
+      <div id="gw-fields" style="display:none;margin-top:4px">
+        <div class="form-row">
+          <label>Gateway Address</label>
+          <input type="text" id="gw-host" placeholder="gateway.company.com" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Gateway Username</label>
+          <input type="text" id="gw-user" placeholder="DOMAIN\\user" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Gateway Password</label>
+          <input type="password" id="gw-pass" autocomplete="off" />
+        </div>
+      </div>
+      <div id="gw-fields" style="display:none;margin-top:4px">
+        <div class="form-row">
+          <label id="lbl-gw-addr">Gateway Address</label>
+          <input type="text" id="gw-host" placeholder="gateway.company.com" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label id="lbl-gw-user">Gateway Username</label>
+          <input type="text" id="gw-user" placeholder="DOMAIN\\user" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label id="lbl-gw-pass">Gateway Password</label>
+          <input type="password" id="gw-pass" autocomplete="off" />
+        </div>
+      </div>
+    </div>
+    <div class="check-row" id="multimon-row">
+      <input type="checkbox" id="multimon" />
+      <label for="multimon" id="lbl-multimon">Multi-ecrans</label>
+    </div>
+    <div class="check-row" id="usb-row">
+      <input type="checkbox" id="usb" />
+      <label for="usb" id="lbl-usb">USB</label>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-connect" id="btn-connect" onclick="connect()">
+      <span id="btn-text">Connexion</span>
+    </button>
+    <button class="btn-stop" onclick="shutdown()" id="btn-stop">⏻ Arrêt</button>
+    <button class="btn-restart" onclick="reboot()" id="btn-restart">↺ Redémarrer</button>
+  </div>
+  <div class="langs">
+    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+  </div>
+  <div class="version">UrrunBerri OS v__VERSION__ — Openema SARL</div>
+</div>
+<script>
+const i18n = {
+  fr: { gw_addr:'Adresse passerelle', gw_user:'Utilisateur passerelle', gw_pass:'Mot de passe passerelle', recent:'Connexions recentes', or:'ou nouvelle connexion', ip:'Adresse IP / DNS', port:'Port', user:'Utilisateur', pass:'Mot de passe', proto:'Protocole', res:'Resolution', multimon:'Multi-ecrans', usb:'USB', connect:'Connexion', connecting:'Connexion...', new:'Nouvelle connexion', error:'Veuillez renseigner IP / DNS et utilisateur.', saved:'Connexion sauvegardee.', save:'Sauvegarder', save2:'Sauvegarder cette connexion', del:'Supprimer', delconfirm:'Supprimer cette connexion ?', stop:'Arret', restart:'Redemarrer', shutdownconfirm:'Eteindre la machine ?', rebootconfirm:'Redemarrer la machine ?' },
+  en: { gw_addr:'Gateway Address', gw_user:'Gateway Username', gw_pass:'Gateway Password', recent:'Recent connections', or:'or new connection', ip:'IP Address / DNS', port:'Port', user:'Username', pass:'Password', proto:'Protocol', res:'Resolution', multimon:'Multi-screen', usb:'USB', connect:'Connect', connecting:'Connecting...', new:'New connection', error:'Please enter IP / DNS and username.', saved:'Connection saved.', save:'Save', save2:'Save this connection', del:'Delete', delconfirm:'Delete this connection?', stop:'Shutdown', restart:'Restart', shutdownconfirm:'Shut down the machine?', rebootconfirm:'Restart the machine?' },
+  es: { gw_addr:'Direccion pasarela', gw_user:'Usuario pasarela', gw_pass:'Contrasena pasarela', recent:'Conexiones recientes', or:'o nueva conexion', ip:'IP / DNS', port:'Puerto', user:'Usuario', pass:'Contrasena', proto:'Protocolo', res:'Resolucion', multimon:'Multi-pantalla', usb:'USB', connect:'Conectar', connecting:'Conectando...', new:'Nueva conexion', error:'Introduce IP / DNS y usuario.', saved:'Conexion guardada.', save:'Guardar', save2:'Guardar esta conexion', del:'Eliminar', delconfirm:'Eliminar esta conexion?', stop:'Apagar', restart:'Reiniciar', shutdownconfirm:'Apagar la maquina?', rebootconfirm:'Reiniciar la maquina?' },
+  eu: { gw_addr:'Atebide helbidea', gw_user:'Atebide erabiltzailea', gw_pass:'Atebide pasahitza', recent:'Azken konexioak', or:'edo konexio berria', ip:'IP / DNS helbidea', port:'Portua', user:'Erabiltzailea', pass:'Pasahitza', proto:'Protokoloa', res:'Bereizmena', multimon:'Pantaila anitz', usb:'USB', connect:'Konektatu', connecting:'Konektatzen...', new:'Konexio berria', error:'Sartu IP / DNS eta erabiltzailea.', saved:'Konexioa gordeta.', save:'Gorde', save2:'Konexio hau gorde', del:'Ezabatu', delconfirm:'Konexio hau ezabatu?', stop:'Itzali', restart:'Berrabiarazi', shutdownconfirm:'Makina itzali?', rebootconfirm:'Makina berrabiarazi?' }
+};
+let lang = 'fr';
+function saveSettings() {
+  fetch('/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({lang: lang, usb: document.getElementById('usb').checked})
+  }).catch(function(){});
+}
+function setLang(l) {
+  lang = l;
+  const t = i18n[l] || i18n.fr;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'"+l+"'"));
+  });
+  document.getElementById('lbl-recent').textContent = t.recent;
+  document.getElementById('divider').textContent = t.or;
+  document.getElementById('lbl-ip').textContent = t.ip;
+  document.getElementById('lbl-port').textContent = t.port;
+  document.getElementById('lbl-user').textContent = t.user;
+  document.getElementById('lbl-pass').textContent = t.pass;
+  document.getElementById('lbl-proto').textContent = t.proto;
+  document.getElementById('lbl-res').textContent = t.res;
+  document.getElementById('lbl-multimon').textContent = t.multimon;
+  document.getElementById('lbl-usb').textContent = t.usb;
+  var e1=document.getElementById('lbl-gw-addr'); if(e1&&t.gw_addr) e1.textContent=t.gw_addr;
+  var e2=document.getElementById('lbl-gw-user'); if(e2&&t.gw_user) e2.textContent=t.gw_user;
+  var e3=document.getElementById('lbl-gw-pass'); if(e3&&t.gw_pass) e3.textContent=t.gw_pass;
+  saveSettings();
+  document.getElementById('btn-text').textContent = t.connect;
+  document.getElementById('error-msg').textContent = t.error;
+  document.getElementById('btn-save').textContent = t.save;
+  document.getElementById('btn-save2').textContent = t.save2;
+  document.getElementById('btn-delete').textContent = t.del;
+  document.getElementById('btn-stop').textContent = '⏻ ' + t.stop;
+  document.getElementById('btn-restart').textContent = '↺ ' + t.restart;
+  const sel = document.getElementById('saved-select');
+  if (sel.options.length > 0) sel.options[sel.options.length-1].text = t.new;
+}
+function onProtocolChange() {
+  const proto = document.getElementById('protocol').value;
+  const defaults = { rdp:'3389', rdpgw:'3389', vnc:'5901', ssh:'22', web:'443' };
+  const portField = document.getElementById('port');
+  const cur = portField.value.trim();
+  if (!cur || Object.values(defaults).includes(cur)) {
+    portField.value = defaults[proto] || '3389';
+  }
+  const rdpOnly = proto === 'rdp' || proto === 'rdpgw';
+  var gwFields = document.getElementById('gw-fields');
+  if (gwFields) gwFields.style.display = proto === 'rdpgw' ? '' : 'none';
+  document.getElementById('resolution').parentElement.style.opacity = rdpOnly ? '1' : '0.35';
+  document.getElementById('multimon-row').style.opacity = rdpOnly ? '1' : '0.35';
+  document.getElementById('usb-row').style.opacity = rdpOnly ? '1' : '0.35';
+}
+let savedConnections = __SAVED_CONNECTIONS__;
+if (!Array.isArray(savedConnections)) savedConnections = [];
+function renderSaved() {
+  const sel = document.getElementById('saved-select');
+  const wrap = document.getElementById('saved-wrap');
+  const wrap2 = document.getElementById('saved-wrap-empty');
+  const div = document.getElementById('divider');
+  if (savedConnections && savedConnections.length > 0) {
+    sel.innerHTML = '';
+    savedConnections.forEach((c, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.text = (c.name ? c.name : c.host+':'+c.port+' ('+c.user+')');
+      sel.appendChild(opt);
+    });
+    const newOpt = document.createElement('option');
+    newOpt.value = 'new';
+    newOpt.text = i18n[lang].new;
+    sel.appendChild(newOpt);
+    wrap.style.display = 'block';
+    wrap2.style.display = 'none';
+    div.style.display = 'flex';
+    onSavedSelect();
+  } else {
+    wrap.style.display = 'none';
+    wrap2.style.display = 'block';
+    div.style.display = 'none';
+  }
+}
+function onSavedSelect() {
+  const val = document.getElementById('saved-select').value;
+  if (val === 'new') {
+    document.getElementById('ip').value = '';
+    document.getElementById('port').value = '3389';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('protocol').value = 'rdp';
+    document.getElementById('resolution').value = 'auto';
+    document.getElementById('multimon').checked = false;
+    document.getElementById('usb').checked = false;
+    document.getElementById('ip').focus();
+  } else {
+    const c = savedConnections[parseInt(val)];
+    if (c) {
+      document.getElementById('ip').value = c.host || '';
+      document.getElementById('port').value = c.port || '3389';
+      document.getElementById('username').value = c.user || '';
+      document.getElementById('password').value = '';
+      document.getElementById('protocol').value = c.protocol || 'rdp';
+      document.getElementById('resolution').value = c.resolution || 'auto';
+      document.getElementById('multimon').checked = c.multimon == '1';
+      onProtocolChange();
+      document.getElementById('password').focus();
+    }
+  }
+}
+function saveConnection() {
+  const ip = document.getElementById('ip').value.trim();
+  const user = document.getElementById('username').value.trim();
+  if (!ip || !user) { document.getElementById('error-msg').style.display='block'; return; }
+  const data = {
+    name: ip+' ('+user+')',
+    host: ip,
+    port: document.getElementById('port').value.trim() || '3389',
+    user: user,
+    domain: '',
+    protocol: document.getElementById('protocol').value,
+    gw_host: (document.getElementById('gw-host') || {value:''}).value,
+    gw_user: (document.getElementById('gw-user') || {value:''}).value,
+    gw_pass: (document.getElementById('gw-pass') || {value:''}).value,
+    gw_host: (document.getElementById('gw-host') || {value:''}).value,
+    gw_user: (document.getElementById('gw-user') || {value:''}).value,
+    gw_pass: (document.getElementById('gw-pass') || {value:''}).value,
+    resolution: document.getElementById('resolution').value,
+    multimon: document.getElementById('multimon').checked ? '1' : '0'
+  };
+  fetch('http://127.0.0.1:7070/save', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  }).then(r=>r.json()).then(res=>{
+    if (res.ok) {
+      savedConnections = res.connections;
+      renderSaved();
+      const sm = document.getElementById('success-msg');
+      sm.textContent = i18n[lang].saved;
+      sm.style.display = 'block';
+      setTimeout(()=>{ sm.style.display='none'; }, 2500);
+    }
+  }).catch(()=>{});
+}
+function deleteConnection() {
+  const val = document.getElementById('saved-select').value;
+  if (val === 'new' || val === '') return;
+  if (!confirm(i18n[lang].delconfirm)) return;
+  fetch('http://127.0.0.1:7070/delete', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({index: parseInt(val)})
+  }).then(r=>r.json()).then(res=>{
+    if (res.ok) { savedConnections = res.connections; renderSaved(); }
+  }).catch(()=>{});
+}
+function connect() {
+  const ip = document.getElementById('ip').value.trim();
+  const port = document.getElementById('port').value.trim() || '3389';
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value;
+  const protocol = document.getElementById('protocol').value;
+  const gw_host = (document.getElementById('gw-host') || {value:''}).value;
+  const gw_user = (document.getElementById('gw-user') || {value:''}).value;
+  const gw_pass = (document.getElementById('gw-pass') || {value:''}).value;
+  const gw_host = (document.getElementById('gw-host') || {value:''}).value;
+  const gw_user = (document.getElementById('gw-user') || {value:''}).value;
+  const gw_pass = (document.getElementById('gw-pass') || {value:''}).value;
+  const res = document.getElementById('resolution').value;
+  const multimon = document.getElementById('multimon').checked ? '1' : '0';
+  const usb = document.getElementById('usb').checked ? '1' : '0';
+  if (!ip || (!user && protocol !== 'web')) { document.getElementById('error-msg').style.display='block'; return; }
+  document.getElementById('error-msg').style.display='none';
+  const btn = document.getElementById('btn-connect');
+  btn.classList.add('loading');
+  document.getElementById('btn-text').textContent = i18n[lang].connecting;
+  const result = ip+'|'+port+'|'+user+'|'+pass+'|||'+protocol+'|'+res+'|'+multimon+'|'+usb+'|'+gw_host+'|'+gw_user+'|'+gw_pass;
+  fetch('http://127.0.0.1:7070/connect?data='+encodeURIComponent(result)).catch(()=>{});
+}
+function shutdown() {
+  if (!confirm(i18n[lang].shutdownconfirm)) return;
+  fetch('http://127.0.0.1:7070/shutdown').catch(()=>{});
+}
+function reboot() {
+  if (!confirm(i18n[lang].rebootconfirm)) return;
+  fetch('http://127.0.0.1:7070/reboot').catch(()=>{});
+}
+document.addEventListener('keydown', e => { if (e.key==='Enter') connect(); });
+renderSaved();
+onProtocolChange();
+// Load saved settings on startup
+fetch('/settings').then(function(r){return r.json()}).then(function(s){
+  if(s.lang) setLang(s.lang);
+  if(s.usb) document.getElementById('usb').checked = true;
+}).catch(function(){});
+// Save USB setting on change
+document.getElementById('usb').addEventListener('change', saveSettings);
+</script>
+</body>
+</html>
