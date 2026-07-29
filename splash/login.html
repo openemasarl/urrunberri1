@@ -28,7 +28,7 @@ body::before {
   background: #ffffff;
   border: 1.5px solid rgba(35,82,190,0.15);
   border-radius: 24px;
-  padding: 32px 44px;
+  padding: 20px 32px;
   width: 500px;
   box-shadow: 0 8px 40px rgba(35,82,190,0.1);
   position: relative;
@@ -39,7 +39,7 @@ body::before {
   from { opacity:0; transform:translateY(20px); }
   to   { opacity:1; transform:translateY(0); }
 }
-.logo-wrap { text-align: center; margin-bottom: 22px; }
+.logo-wrap { text-align: center; margin-bottom: 10px; }
 .logo-wrap img {
   width: 220px; height: auto;
   object-fit: contain;
@@ -52,7 +52,7 @@ body::before {
   letter-spacing: 1px;
   margin-bottom: 8px;
 }
-.saved-wrap { margin-bottom: 14px; }
+.saved-wrap { margin-bottom: 6px; }
 .saved-actions { display: flex; gap: 6px; margin-top: 6px; }
 .btn-small {
   flex: 1; padding: 7px 10px;
@@ -73,7 +73,7 @@ body::before {
 }
 .btn-small.danger:hover { background: rgba(220,53,69,0.15); }
 select {
-  width: 100%; padding: 11px 14px;
+  width: 100%; padding: 8px 12px;
   background: #f0f4fb;
   border: 1.5px solid rgba(35,82,190,0.2);
   border-radius: 10px;
@@ -97,7 +97,7 @@ select option { background: #fff; color: #1a2744; }
   content: ''; flex: 1; height: 1px;
   background: rgba(35,82,190,0.12);
 }
-.fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.fields { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .row { display: flex; gap: 10px; }
 .row .field { flex: 1; }
 .row .field.port { flex: 0 0 90px; }
@@ -109,7 +109,7 @@ select option { background: #fff; color: #1a2744; }
   margin-bottom: 5px;
 }
 input {
-  width: 100%; padding: 11px 14px;
+  width: 100%; padding: 8px 12px;
   background: #f0f4fb;
   border: 1.5px solid rgba(35,82,190,0.18);
   border-radius: 10px; color: #1a2744;
@@ -273,7 +273,7 @@ input:focus { border-color: #2352be; background: #fff; }
           <option value="2560x1440">2560x1440</option>
         </select>
       </div>
-      <div id="gw-fields" style="display:none;margin-top:4px">
+      <div id="gw-fields" style="display:none;margin-top:2px">
         <div class="form-row">
           <label>Gateway Address</label>
           <input type="text" id="gw-host" placeholder="gateway.company.com" autocomplete="off" />
