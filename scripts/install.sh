@@ -176,6 +176,12 @@ systemctl enable getty@tty2.service
 systemctl start getty@tty2.service
 systemctl daemon-reload
 
+# Setup admin scripts
+mkdir -p /root/install /root/uninstall
+curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/install.sh -o /root/install/urrunberri.sh
+curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/uninstall.sh -o /root/uninstall/urrunberri.sh
+chmod +x /root/install/urrunberri.sh /root/uninstall/urrunberri.sh
+info "Scripts admin disponibles dans /root/install/ et /root/uninstall/"
 info "=== Installation terminee (branche test — GTK WebView) ==="
 info "Version : $APP_VERSION"
 info "Redemarrez avec : reboot"
