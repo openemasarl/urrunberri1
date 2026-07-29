@@ -263,8 +263,6 @@ numlockx on 2>/dev/null || true
             if [[ -n "$GW_HOST" ]]; then
                 GW_STR="g:${GW_HOST},u:${GW_USER},p:${GW_PASS},type:http,extauth-sspi-ntlm"
                 GW_ARGS+=("/gateway:${GW_STR}")
-
-
             fi
             "$XFREERDP_BIN" \
                 "/v:${CONN_HOST}:${CONN_PORT}" \

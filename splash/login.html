@@ -287,20 +287,6 @@ input:focus { border-color: #2352be; background: #fff; }
           <input type="password" id="gw-pass" autocomplete="off" />
         </div>
       </div>
-      <div id="gw-fields" style="display:none;margin-top:4px">
-        <div class="form-row">
-          <label id="lbl-gw-addr">Gateway Address</label>
-          <input type="text" id="gw-host" placeholder="gateway.company.com" autocomplete="off" />
-        </div>
-        <div class="form-row">
-          <label id="lbl-gw-user">Gateway Username</label>
-          <input type="text" id="gw-user" placeholder="DOMAIN\\user" autocomplete="off" />
-        </div>
-        <div class="form-row">
-          <label id="lbl-gw-pass">Gateway Password</label>
-          <input type="password" id="gw-pass" autocomplete="off" />
-        </div>
-      </div>
     </div>
     <div class="check-row" id="multimon-row">
       <input type="checkbox" id="multimon" />
@@ -328,10 +314,10 @@ input:focus { border-color: #2352be; background: #fff; }
 </div>
 <script>
 const i18n = {
-  fr: { gw_addr:'Adresse passerelle', gw_user:'Utilisateur passerelle', gw_pass:'Mot de passe passerelle', recent:'Connexions recentes', or:'ou nouvelle connexion', ip:'Adresse IP / DNS', port:'Port', user:'Utilisateur', pass:'Mot de passe', proto:'Protocole', res:'Resolution', multimon:'Multi-ecrans', usb:'USB', connect:'Connexion', connecting:'Connexion...', new:'Nouvelle connexion', error:'Veuillez renseigner IP / DNS et utilisateur.', saved:'Connexion sauvegardee.', save:'Sauvegarder', save2:'Sauvegarder cette connexion', del:'Supprimer', delconfirm:'Supprimer cette connexion ?', stop:'Arret', restart:'Redemarrer', shutdownconfirm:'Eteindre la machine ?', rebootconfirm:'Redemarrer la machine ?' },
-  en: { gw_addr:'Gateway Address', gw_user:'Gateway Username', gw_pass:'Gateway Password', recent:'Recent connections', or:'or new connection', ip:'IP Address / DNS', port:'Port', user:'Username', pass:'Password', proto:'Protocol', res:'Resolution', multimon:'Multi-screen', usb:'USB', connect:'Connect', connecting:'Connecting...', new:'New connection', error:'Please enter IP / DNS and username.', saved:'Connection saved.', save:'Save', save2:'Save this connection', del:'Delete', delconfirm:'Delete this connection?', stop:'Shutdown', restart:'Restart', shutdownconfirm:'Shut down the machine?', rebootconfirm:'Restart the machine?' },
-  es: { gw_addr:'Direccion pasarela', gw_user:'Usuario pasarela', gw_pass:'Contrasena pasarela', recent:'Conexiones recientes', or:'o nueva conexion', ip:'IP / DNS', port:'Puerto', user:'Usuario', pass:'Contrasena', proto:'Protocolo', res:'Resolucion', multimon:'Multi-pantalla', usb:'USB', connect:'Conectar', connecting:'Conectando...', new:'Nueva conexion', error:'Introduce IP / DNS y usuario.', saved:'Conexion guardada.', save:'Guardar', save2:'Guardar esta conexion', del:'Eliminar', delconfirm:'Eliminar esta conexion?', stop:'Apagar', restart:'Reiniciar', shutdownconfirm:'Apagar la maquina?', rebootconfirm:'Reiniciar la maquina?' },
-  eu: { gw_addr:'Atebide helbidea', gw_user:'Atebide erabiltzailea', gw_pass:'Atebide pasahitza', recent:'Azken konexioak', or:'edo konexio berria', ip:'IP / DNS helbidea', port:'Portua', user:'Erabiltzailea', pass:'Pasahitza', proto:'Protokoloa', res:'Bereizmena', multimon:'Pantaila anitz', usb:'USB', connect:'Konektatu', connecting:'Konektatzen...', new:'Konexio berria', error:'Sartu IP / DNS eta erabiltzailea.', saved:'Konexioa gordeta.', save:'Gorde', save2:'Konexio hau gorde', del:'Ezabatu', delconfirm:'Konexio hau ezabatu?', stop:'Itzali', restart:'Berrabiarazi', shutdownconfirm:'Makina itzali?', rebootconfirm:'Makina berrabiarazi?' }
+  fr: { recent:'Connexions recentes', or:'ou nouvelle connexion', ip:'Adresse IP / DNS', port:'Port', user:'Utilisateur', pass:'Mot de passe', proto:'Protocole', res:'Resolution', multimon:'Multi-ecrans', usb:'USB', connect:'Connexion', connecting:'Connexion...', new:'Nouvelle connexion', error:'Veuillez renseigner IP / DNS et utilisateur.', saved:'Connexion sauvegardee.', save:'Sauvegarder', save2:'Sauvegarder cette connexion', del:'Supprimer', delconfirm:'Supprimer cette connexion ?', stop:'Arret', restart:'Redemarrer', shutdownconfirm:'Eteindre la machine ?', rebootconfirm:'Redemarrer la machine ?' },
+  en: { recent:'Recent connections', or:'or new connection', ip:'IP Address / DNS', port:'Port', user:'Username', pass:'Password', proto:'Protocol', res:'Resolution', multimon:'Multi-screen', usb:'USB', connect:'Connect', connecting:'Connecting...', new:'New connection', error:'Please enter IP / DNS and username.', saved:'Connection saved.', save:'Save', save2:'Save this connection', del:'Delete', delconfirm:'Delete this connection?', stop:'Shutdown', restart:'Restart', shutdownconfirm:'Shut down the machine?', rebootconfirm:'Restart the machine?' },
+  es: { recent:'Conexiones recientes', or:'o nueva conexion', ip:'IP / DNS', port:'Puerto', user:'Usuario', pass:'Contrasena', proto:'Protocolo', res:'Resolucion', multimon:'Multi-pantalla', usb:'USB', connect:'Conectar', connecting:'Conectando...', new:'Nueva conexion', error:'Introduce IP / DNS y usuario.', saved:'Conexion guardada.', save:'Guardar', save2:'Guardar esta conexion', del:'Eliminar', delconfirm:'Eliminar esta conexion?', stop:'Apagar', restart:'Reiniciar', shutdownconfirm:'Apagar la maquina?', rebootconfirm:'Reiniciar la maquina?' },
+  eu: { recent:'Azken konexioak', or:'edo konexio berria', ip:'IP / DNS helbidea', port:'Portua', user:'Erabiltzailea', pass:'Pasahitza', proto:'Protokoloa', res:'Bereizmena', multimon:'Pantaila anitz', usb:'USB', connect:'Konektatu', connecting:'Konektatzen...', new:'Konexio berria', error:'Sartu IP / DNS eta erabiltzailea.', saved:'Konexioa gordeta.', save:'Gorde', save2:'Konexio hau gorde', del:'Ezabatu', delconfirm:'Konexio hau ezabatu?', stop:'Itzali', restart:'Berrabiarazi', shutdownconfirm:'Makina itzali?', rebootconfirm:'Makina berrabiarazi?' }
 };
 let lang = 'fr';
 function saveSettings() {
@@ -357,9 +343,6 @@ function setLang(l) {
   document.getElementById('lbl-res').textContent = t.res;
   document.getElementById('lbl-multimon').textContent = t.multimon;
   document.getElementById('lbl-usb').textContent = t.usb;
-  var e1=document.getElementById('lbl-gw-addr'); if(e1&&t.gw_addr) e1.textContent=t.gw_addr;
-  var e2=document.getElementById('lbl-gw-user'); if(e2&&t.gw_user) e2.textContent=t.gw_user;
-  var e3=document.getElementById('lbl-gw-pass'); if(e3&&t.gw_pass) e3.textContent=t.gw_pass;
   saveSettings();
   document.getElementById('btn-text').textContent = t.connect;
   document.getElementById('error-msg').textContent = t.error;
@@ -456,9 +439,6 @@ function saveConnection() {
     gw_host: (document.getElementById('gw-host') || {value:''}).value,
     gw_user: (document.getElementById('gw-user') || {value:''}).value,
     gw_pass: (document.getElementById('gw-pass') || {value:''}).value,
-    gw_host: (document.getElementById('gw-host') || {value:''}).value,
-    gw_user: (document.getElementById('gw-user') || {value:''}).value,
-    gw_pass: (document.getElementById('gw-pass') || {value:''}).value,
     resolution: document.getElementById('resolution').value,
     multimon: document.getElementById('multimon').checked ? '1' : '0'
   };
@@ -495,9 +475,6 @@ function connect() {
   const user = document.getElementById('username').value.trim();
   const pass = document.getElementById('password').value;
   const protocol = document.getElementById('protocol').value;
-  const gw_host = (document.getElementById('gw-host') || {value:''}).value;
-  const gw_user = (document.getElementById('gw-user') || {value:''}).value;
-  const gw_pass = (document.getElementById('gw-pass') || {value:''}).value;
   const gw_host = (document.getElementById('gw-host') || {value:''}).value;
   const gw_user = (document.getElementById('gw-user') || {value:''}).value;
   const gw_pass = (document.getElementById('gw-pass') || {value:''}).value;
