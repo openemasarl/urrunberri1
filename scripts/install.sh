@@ -4,12 +4,12 @@
 #  Debian 13 Trixie — Root autologin — xfreerdp3
 #  Author : Mathieu Cadi — Openema SARL
 #  GitHub : https://github.com/matthewc00002/urrunberri1
-#  Branch : test (GTK WebView — sans Firefox)
+#  Branch : main (GTK WebView — sans Firefox)
 # =============================================================================
 
 set -e
 
-GITHUB_RAW="https://raw.githubusercontent.com/openemasarl/urrunberri1/test"
+GITHUB_RAW="https://raw.githubusercontent.com/openemasarl/urrunberri1/main"
 INSTALL_DIR="/opt/urrunberri-os"
 
 info()  { echo "[UrrunBerri OS] $1"; }
@@ -18,7 +18,7 @@ error() { echo "[ERREUR] $1"; exit 1; }
 [[ $EUID -ne 0 ]] && error "Lancez ce script en root : bash install.sh"
 
 info "=== UrrunBerri OS — Installation Debian 13 Trixie ==="
-info "=== Branche : test (GTK WebView) ==="
+info "=== Branche : main (GTK WebView) ==="
 
 # ── PACKAGES ──────────────────────────────────────────────────────────────────
 info "Installation des paquets..."
@@ -78,9 +78,9 @@ INSTALL_DATE=$(date '+%Y-%m-%d %H:%M:%S')
 cat > /etc/urrunberri-os/version << VERSIONEOF
 version=$APP_VERSION
 date_installation=$INSTALL_DATE
-branche=test
+branche=main
 VERSIONEOF
-info "Version installee : $APP_VERSION ($INSTALL_DATE) [branche test]"
+info "Version installee : $APP_VERSION ($INSTALL_DATE) [branche main]"
 
 # ── OPENBOX FOR ROOT ──────────────────────────────────────────────────────────
 mkdir -p /root/.config/openbox
@@ -139,7 +139,7 @@ sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
 grep -q "PermitRootLogin yes" /etc/ssh/sshd_config || echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 
 # ── DOWNLOAD APP FILES ────────────────────────────────────────────────────────
-info "Telechargement des fichiers depuis GitHub (branche test)..."
+info "Telechargement des fichiers depuis GitHub (branche main)..."
 curl -fsSL "$GITHUB_RAW/scripts/boot.sh" -o "$INSTALL_DIR/scripts/boot.sh"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_server.py" -o "$INSTALL_DIR/scripts/urrunberri_server.py"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_launcher.py" -o "$INSTALL_DIR/scripts/urrunberri_launcher.py"
@@ -178,8 +178,8 @@ systemctl daemon-reload
 
 # Setup admin scripts
 mkdir -p /root/install /root/uninstall
-curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/test/scripts/admin/install.sh -o /root/install/urrunberri.sh
-curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/test/scripts/admin/uninstall.sh -o /root/uninstall/urrunberri.sh
+curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/install.sh -o /root/install/urrunberri.sh
+curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/uninstall.sh -o /root/uninstall/urrunberri.sh
 chmod +x /root/install/urrunberri.sh /root/uninstall/urrunberri.sh
 # Restauration des connexions sauvegardees
 if [ -f /root/urrunberri-backup/saved_connections.csv ]; then
@@ -187,7 +187,7 @@ if [ -f /root/urrunberri-backup/saved_connections.csv ]; then
     info "Connexions precedentes restaurees depuis /root/urrunberri-backup/"
 fi
 info "Scripts admin disponibles dans /root/install/ et /root/uninstall/"
-info "=== Installation terminee (branche test — GTK WebView) ==="
+info "=== Installation terminee (branche main — GTK WebView) ==="
 info "Version : $APP_VERSION"
 info "Redemarrez avec : reboot"
 info "SSH root : ssh root@IP (PermitRootLogin active)"
