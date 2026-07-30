@@ -4,7 +4,7 @@
 #  Debian 13 Trixie — Root autologin — xfreerdp3
 #  Author : Mathieu Cadi — Openema SARL
 #  GitHub : https://github.com/openemasarl/urrunberri1
-#  Branch : main
+#  Branch : main (GTK WebView — sans Firefox)
 # =============================================================================
 
 set -e
@@ -140,7 +140,7 @@ info "Telechargement des fichiers depuis GitHub (branche main)..."
 curl -fsSL "$GITHUB_RAW/scripts/boot.sh" -o "$INSTALL_DIR/scripts/boot.sh"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_server.py" -o "$INSTALL_DIR/scripts/urrunberri_server.py"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_launcher.py" -o "$INSTALL_DIR/scripts/urrunberri_launcher.py"
-curl -fsSL "$GITHUB_RAW/client-ui/splash/login.html" -o "$INSTALL_DIR/splash/login.html"
+curl -fsSL "$GITHUB_RAW/splash/login.html" -o "$INSTALL_DIR/splash/login.html"
 curl -fsSL "$GITHUB_RAW/client-ui/splash/logo.png" -o "$INSTALL_DIR/splash/logo.png" 2>/dev/null || true
 curl -fsSL "$GITHUB_RAW/client-ui/splash/urrunberri.png" -o "$INSTALL_DIR/splash/urrunberri.png" 2>/dev/null || true
 
@@ -173,7 +173,18 @@ systemctl enable getty@tty2.service
 systemctl start getty@tty2.service
 systemctl daemon-reload
 
-info "=== Installation terminee (branche main) ==="
+# Setup admin scripts
+mkdir -p /root/install /root/uninstall
+curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/install.sh -o /root/install/urrunberri.sh
+curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/uninstall.sh -o /root/uninstall/urrunberri.sh
+chmod +x /root/install/urrunberri.sh /root/uninstall/urrunberri.sh
+# Restauration des connexions sauvegardees
+if [ -f /root/urrunberri-backup/saved_connections.csv ]; then
+    cp /root/urrunberri-backup/saved_connections.csv /etc/urrunberri-os/saved_connections.csv
+    info "Connexions precedentes restaurees depuis /root/urrunberri-backup/"
+fi
+info "Scripts admin disponibles dans /root/install/ et /root/uninstall/"
+info "=== Installation terminee (branche main — GTK WebView) ==="
 info "Version : $APP_VERSION"
 info "Redemarrez avec : reboot"
 info "SSH root : ssh root@IP (PermitRootLogin active)"

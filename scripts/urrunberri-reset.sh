@@ -72,6 +72,9 @@ echo "   Dependances orphelines supprimees."
 # ── 4. SUPPRIMER TOUS LES FICHIERS APPLICATION ──────────────────────────────
 echo "[4/7] Suppression des fichiers application..."
 rm -rf /opt/urrunberri-os
+# Sauvegarde des connexions avant suppression
+mkdir -p /root/urrunberri-backup
+[ -f /etc/urrunberri-os/saved_connections.csv ] && cp /etc/urrunberri-os/saved_connections.csv /root/urrunberri-backup/saved_connections.csv && echo "   Connexions sauvegardees dans /root/urrunberri-backup/"
 rm -rf /etc/urrunberri-os
 rm -f /tmp/urrunberri_action.txt
 rm -f /tmp/urrunberri_login.txt
@@ -127,9 +130,9 @@ echo "   Desinstallation complete terminee."
 echo ""
 echo "   Le systeme est propre. SSH n'a pas ete modifie."
 echo ""
-echo "   Pour reinstaller (branche test) :"
+echo "   Pour reinstaller (branche main) :"
 echo "   curl -fsSL https://raw.githubusercontent.com/"
-echo "   openemasarl/urrunberri1/test/scripts/"
+echo "   openemasarl/urrunberri1/main/scripts/"
 echo "   install.sh | bash && reboot"
 echo ""
 echo "   Pour reinstaller (branche main) :"
