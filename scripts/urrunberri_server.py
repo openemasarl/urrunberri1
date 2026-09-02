@@ -1,0 +1,551 @@
+#!/usr/bin/env python3
+# =============================================================================
+#  UrrunBerri OS — Python API Server (Hardened)
+#  Port 7070 — localhost only
+#  Author : Mathieu Cadi — Openema SARL
+#  GitHub : https://github.com/matthewc00002/urrunberri1
+#
+#  Security: Input sanitization against command injection, delimiter attacks,
+#  and shell metacharacter exploits.
+# =============================================================================
+
+import http.server
+import urllib.parse
+import json
+import subprocess
+import os
+import re
+
+SAVED_FILE = "/etc/urrunberri-os/saved_connections.csv"
+SETTINGS_FILE = "/etc/urrunberri-os/settings.json"
+SPLASH_DIR = "/opt/urrunberri-os/splash"
+VERSION_FILE = "/etc/urrunberri-os/version"
+ACTION_FILE = "/tmp/urrunberri_action.txt"
+RESULT_FILE = "/tmp/urrunberri_login.txt"
+PORT = 7070
+
+# ── INPUT SANITIZATION ───────────────────────────────────────────────────────
+
+# Characters that could cause shell injection or break the pipe delimiter
+DANGEROUS_CHARS = re.compile(r'[|;&$`\\(){}<>\n\r\x00\'"!#~]')
+MAX_FIELD_LENGTH = 255
+MAX_PASSWORD_LENGTH = 512
+
+def sanitize(value, max_len=MAX_FIELD_LENGTH):
+    """Remove dangerous characters and limit length."""
+    if not isinstance(value, str):
+        return ''
+    value = value[:max_len]
+    value = DANGEROUS_CHARS.sub('', value)
+    return value.strip()
+
+def sanitize_password(value):
+    """Sanitize password — allow more characters but strip pipe and shell injection."""
+    if not isinstance(value, str):
+        return ''
+    value = value[:MAX_PASSWORD_LENGTH]
+    # Only strip the most dangerous: pipe (breaks delimiter), backtick, $() for injection
+    value = re.sub(r'[|\x00\n\r]', '', value)
+    return value
+
+def sanitize_host(host):
+    """Validate hostname or IP format — strict whitelist."""
+    host = sanitize(host, 253)
+    # Allow only alphanumeric, dots, hyphens (hostname), colons (IPv6)
+    if not re.match(r'^[a-zA-Z0-9.\-:]+$', host):
+        return ''
+    return host
+
+def sanitize_port(port):
+    """Validate port — must be numeric 1-65535."""
+    try:
+        p = int(str(port).strip())
+        if 1 <= p <= 65535:
+            return str(p)
+    except (ValueError, TypeError):
+        pass
+    return '3389'
+
+def sanitize_protocol(proto):
+    """Only allow known protocols."""
+    proto = str(proto).strip().lower()
+    if proto in ('rdp', 'vnc', 'ssh', 'rdpgw'):
+        return proto
+    return 'rdp'
+
+def sanitize_resolution(res):
+    """Validate resolution format: WIDTHxHEIGHT or 'auto'."""
+    res = str(res).strip().lower()
+    if res == 'auto':
+        return 'auto'
+    if re.match(r'^\d{3,5}x\d{3,5}$', res):
+        return res
+    return '1920x1080'
+
+def sanitize_flag(val):
+    """Validate boolean flag — must be '0' or '1'."""
+    return '1' if str(val).strip() == '1' else '0'
+
+def sanitize_connect_data(raw_data):
+    """Sanitize the full connect data string from login.html.
+    Format: host|port|user|pass|||protocol|resolution|multimon|usb
+    """
+    parts = raw_data.split('|')
+    while len(parts) < 13:
+        parts.append('')
+
+    host       = sanitize_host(parts[0])
+    port       = sanitize_port(parts[1])
+    user       = sanitize(parts[2])
+    password   = sanitize_password(parts[3])
+    domain     = sanitize(parts[4])
+    field5     = sanitize(parts[5])
+    protocol   = sanitize_protocol(parts[6])
+    resolution = sanitize_resolution(parts[7])
+    multimon   = sanitize_flag(parts[8])
+    usb        = sanitize_flag(parts[9])
+
+    if not host or not user:
+        return None
+
+    gw_host = sanitize_host(parts[10]) if parts[10] else ""
+    gw_user = sanitize(parts[11])
+    gw_pass = sanitize_password(parts[12])
+    return f"{host}|{port}|{user}|{password}|{domain}|{field5}|{protocol}|{resolution}|{multimon}|{usb}|{gw_host}|{gw_user}|{gw_pass}"
+
+# ── APPLICATION LOGIC ─────────────────────────────────────────────────────────
+
+def get_version():
+    try:
+        with open(VERSION_FILE, 'r') as f:
+            for line in f:
+                if line.startswith('version='):
+                    return line.split('=', 1)[1].strip()
+        with open(VERSION_FILE, 'r') as f:
+            return f.readline().strip() or "?"
+    except:
+        return "?"
+
+def write_action(action, data=""):
+    with open(ACTION_FILE, 'w') as f:
+        f.write(action)
+    if data:
+        with open(RESULT_FILE, 'w') as f:
+            f.write(data)
+
+def load_connections():
+    conns = []
+    try:
+        if os.path.exists(SAVED_FILE):
+            with open(SAVED_FILE, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = line.split('|')
+                    while len(parts) < 12:
+                        parts.append('')
+                    conns.append({
+                        'host':       parts[0],
+                        'port':       parts[1],
+                        'user':       parts[2],
+                        'domain':     parts[3],
+                        'name':       parts[4],
+                        'protocol':   parts[5] or 'rdp',
+                        'resolution': parts[6] or '1920x1080',
+                        'multimon':   parts[7] or '0',
+                        'password':   parts[8],
+                        'gw_host':    parts[9],
+                        'gw_user':    parts[10],
+                        'gw_pass':    parts[11]
+                    })
+    except:
+        pass
+    return conns
+
+def save_connection(host, port, user, domain='', name='', protocol='rdp', resolution='1920x1080', multimon='0', password='', gw_host='', gw_user='', gw_pass=''):
+    # Sanitize all inputs
+    host       = sanitize_host(host)
+    port       = sanitize_port(port)
+    user       = sanitize(user)
+    domain     = sanitize(domain)
+    name       = sanitize(name)
+    protocol   = sanitize_protocol(protocol)
+    resolution = sanitize_resolution(resolution)
+    multimon   = sanitize_flag(multimon)
+    password   = sanitize_password(password)
+    gw_host    = sanitize_host(gw_host) if gw_host else ''
+    gw_user    = sanitize(gw_user)
+    gw_pass    = sanitize_password(gw_pass)
+
+    if not host or not user:
+        return load_connections()
+    conns = [c for c in load_connections()
+             if not (c['host'] == host and c['port'] == port and c['user'] == user)]
+    conns.insert(0, {
+        'host': host, 'port': port, 'user': user,
+        'domain': domain, 'name': name, 'protocol': protocol,
+        'resolution': resolution, 'multimon': multimon,
+        'password': password, 'gw_host': gw_host,
+        'gw_user': gw_user, 'gw_pass': gw_pass
+    })
+    conns = conns[:10]
+    with open(SAVED_FILE, 'w') as f:
+        for c in conns:
+            f.write(f"{c['host']}|{c['port']}|{c['user']}|{c['domain']}|{c['name']}|{c['protocol']}|{c['resolution']}|{c['multimon']}|{c.get('password','')}|{c.get('gw_host','')}|{c.get('gw_user','')}|{c.get('gw_pass','')}\n")
+    return conns
+
+def delete_connection(index):
+    conns = load_connections()
+    try:
+        idx = int(index)
+        if 0 <= idx < len(conns):
+            conns.pop(idx)
+    except (ValueError, TypeError):
+        pass
+    with open(SAVED_FILE, 'w') as f:
+        for c in conns:
+            f.write(f"{c['host']}|{c['port']}|{c['user']}|{c['domain']}|{c['name']}|{c['protocol']}|{c['resolution']}|{c['multimon']}|{c.get('password','')}|{c.get('gw_host','')}|{c.get('gw_user','')}|{c.get('gw_pass','')}\n")
+    return conns
+
+
+def load_settings():
+    try:
+        if os.path.exists(SETTINGS_FILE):
+            with open(SETTINGS_FILE, 'r') as f:
+                return json.load(f)
+    except:
+        pass
+    return {"lang": "fr", "usb": False}
+
+def save_settings(settings):
+    allowed = {"lang", "usb"}
+    clean = {}
+    for k in allowed:
+        if k in settings:
+            clean[k] = settings[k]
+    with open(SETTINGS_FILE, 'w') as f:
+        json.dump(clean, f)
+    return clean
+
+def test_connection(host, port):
+    # Sanitize before passing to subprocess
+    host = sanitize_host(host)
+    port = sanitize_port(port)
+    if not host:
+        return 'fail'
+    try:
+        r1 = subprocess.run(['ping', '-c1', '-W2', host], capture_output=True, timeout=5)
+        r2 = subprocess.run(['nc', '-z', '-w3', host, port], capture_output=True, timeout=5)
+        return 'ok' if r1.returncode == 0 and r2.returncode == 0 else 'fail'
+    except:
+        return 'fail'
+
+# ── HTTP HANDLER ──────────────────────────────────────────────────────────────
+
+class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
+
+    def log_message(self, format, *args):
+        pass
+
+    def send_json(self, obj):
+        body = json.dumps(obj).encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', len(body))
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_cors(self, text):
+        encoded = str(text).encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/plain')
+        self.send_header('Content-Length', len(encoded))
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def read_body(self):
+        length = int(self.headers.get('Content-Length', 0))
+        if length > 0:
+            return self.rfile.read(length).decode('utf-8', errors='replace')
+        return ''
+
+    def do_OPTIONS(self):
+        self.send_cors('')
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        path = parsed.path
+        body = self.read_body()
+
+        try:
+            data = json.loads(body)
+        except:
+            data = {}
+
+        if path == '/save':
+            conns = save_connection(
+                host       = data.get('host', ''),
+                port       = data.get('port', '3389'),
+                user       = data.get('user', ''),
+                domain     = data.get('domain', ''),
+                name       = data.get('name', ''),
+                protocol   = data.get('protocol', 'rdp'),
+                resolution = data.get('resolution', '1920x1080'),
+                multimon   = data.get('multimon', '0'),
+                password   = data.get('password', ''),
+                gw_host    = data.get('gw_host', ''),
+                gw_user    = data.get('gw_user', ''),
+                gw_pass    = data.get('gw_pass', '')
+            )
+            self.send_json({'ok': True, 'connections': conns})
+            return
+
+        if path == '/delete':
+            index = data.get('index', -1)
+            conns = delete_connection(index)
+            self.send_json({'ok': True, 'connections': conns})
+            return
+
+        if path == '/settings':
+            save_settings(data)
+            self.send_json({'ok': True, 'settings': load_settings()})
+            return
+
+        if path == '/wifi-connect':
+            ssid = data.get('ssid', '')
+            password = data.get('password', '')
+            import subprocess
+            try:
+                if password:
+                    r = subprocess.run(['nmcli', 'device', 'wifi', 'connect', ssid, 'password', password, 'ifname', 'wlp1s0'], capture_output=True, text=True, timeout=30)
+                else:
+                    r = subprocess.run(['nmcli', 'device', 'wifi', 'connect', ssid, 'ifname', 'wlp1s0'], capture_output=True, text=True, timeout=30)
+                self.send_cors('ok' if r.returncode == 0 else 'error: ' + r.stderr)
+            except Exception as e:
+                self.send_cors('error: ' + str(e))
+            return
+        if path == '/wifi-disconnect':
+            import subprocess
+            try:
+                subprocess.run(['nmcli', 'device', 'disconnect', 'wlp1s0'], capture_output=True, text=True)
+                self.send_cors('ok')
+            except:
+                self.send_cors('error')
+            return
+        if path == '/network-apply':
+            method = data.get('method', 'static')
+            ip = data.get('ip', '')
+            prefix = data.get('prefix', '24')
+            gateway = data.get('gateway', '')
+            dns = data.get('dns', '8.8.8.8')
+            ok = apply_ethernet_config(method, ip, prefix, gateway, dns)
+            self.send_cors('ok' if ok else 'error')
+            return
+        self.send_cors('ok')
+
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+        path = parsed.path
+        params = urllib.parse.parse_qs(parsed.query)
+
+        if path == '/splash/login.html':
+            try:
+                conns = load_connections()
+                conns_json = json.dumps(conns)
+                with open(f"{SPLASH_DIR}/login.html", 'r') as f:
+                    html = f.read()
+                html = html.replace('__SAVED_CONNECTIONS__', conns_json)
+                html = html.replace('__VERSION__', get_version())
+                encoded = html.encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', len(encoded))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(encoded)
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(str(e).encode())
+            return
+
+        if path in ('/splash/urrunberri.png', '/splash/logo.png'):
+            try:
+                fname = os.path.basename(path)
+                fpath = os.path.join(SPLASH_DIR, fname)
+                with open(fpath, 'rb') as f:
+                    data = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/png')
+                self.send_header('Content-Length', len(data))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(data)
+            except:
+                self.send_response(404)
+                self.end_headers()
+            return
+
+        if path == '/version':
+            self.send_cors(get_version())
+            return
+
+        if path == '/connections':
+            self.send_json(load_connections())
+            return
+
+        if path == '/test':
+            host = params.get('host', [''])[0]
+            port = params.get('port', ['3389'])[0]
+            result = test_connection(host, port)
+            self.send_cors(result)
+            return
+
+        if path == '/shutdown':
+            self.send_cors('OK')
+            write_action('shutdown')
+            return
+
+        if path == '/reboot':
+            self.send_cors('OK')
+            write_action('reboot')
+            return
+
+        if path == '/close':
+            self.send_cors('OK')
+            write_action('close')
+            return
+
+        if path == '/terminal':
+            self.send_cors('OK')
+            write_action('terminal')
+            return
+
+        if path == '/settings':
+            self.send_json(load_settings())
+            return
+
+        if path == '/connect':
+            raw_data = params.get('data', [''])[0]
+            # SECURITY: sanitize all fields before writing
+            clean_data = sanitize_connect_data(raw_data)
+            if clean_data:
+                write_action('connect', clean_data)
+                self.send_cors('connecting')
+            else:
+                self.send_cors('error: invalid input')
+            return
+
+        if path == '/splash/network.html':
+            try:
+                with open('/opt/urrunberri-os/splash/network.html', 'rb') as f:
+                    data = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', len(data))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(data)
+            except:
+                self.send_response(404)
+                self.end_headers()
+            return
+        if path == '/network':
+            self.send_json(get_network_status())
+        if path == '/wifi-scan':
+            self.send_json(scan_wifi())
+            return
+            return
+        self.send_cors('ok')
+
+
+# ── NETWORK CONFIGURATION ────────────────────────────────────────────────────
+
+def get_network_status():
+    import subprocess, re
+    result = {}
+    try:
+        ip_out = subprocess.check_output(['ip', 'addr', 'show', 'enp3s0'], text=True, stderr=subprocess.DEVNULL)
+        inet = re.search(r'inet ([\d.]+)/([\d]+)', ip_out)
+        state = 'up' if 'state UP' in ip_out else 'down'
+        result['ethernet'] = {
+            'interface': 'enp3s0',
+            'state': state,
+            'ip': inet.group(1) if inet else '',
+            'prefix': inet.group(2) if inet else '24',
+        }
+    except:
+        result['ethernet'] = {'interface': 'enp3s0', 'state': 'down', 'ip': '', 'prefix': '24'}
+    try:
+        with open('/etc/network/interfaces', 'r') as f:
+            ifaces = f.read()
+        if 'inet dhcp' in ifaces:
+            result['ethernet']['method'] = 'dhcp'
+        else:
+            result['ethernet']['method'] = 'static'
+            gw = re.search(r'gateway\s+([\d.]+)', ifaces)
+            dns = re.search(r'dns-nameservers\s+([\d.\s]+)', ifaces)
+            result['ethernet']['gateway'] = gw.group(1) if gw else ''
+            result['ethernet']['dns'] = dns.group(1).strip().split()[0] if dns else ''
+    except:
+        result['ethernet']['method'] = 'unknown'
+    try:
+        wifi_ip = subprocess.check_output(['ip', 'addr', 'show', 'wlp1s0'], text=True, stderr=subprocess.DEVNULL)
+        wifi_inet = re.search(r'inet ([\d.]+)/([\d]+)', wifi_ip)
+        wifi_state = 'up' if 'state UP' in wifi_ip else 'down'
+        result['wifi'] = {'interface': 'wlp1s0', 'state': wifi_state, 'ip': wifi_inet.group(1) if wifi_inet else '', 'ssid': ''}
+    except:
+        result['wifi'] = {'interface': 'wlp1s0', 'state': 'unavailable', 'ip': '', 'ssid': ''}
+    return result
+
+def apply_ethernet_config(method, ip='', prefix='24', gateway='', dns='8.8.8.8'):
+    import subprocess, time
+    if method == 'dhcp':
+        config = "source /etc/network/interfaces.d/*\nauto lo\niface lo inet loopback\nauto enp3s0\niface enp3s0 inet dhcp\n"
+    else:
+        config = "source /etc/network/interfaces.d/*\nauto lo\niface lo inet loopback\nallow-hotplug enp3s0\niface enp3s0 inet static\n        address " + ip + "/" + prefix + "\n        gateway " + gateway + "\n        dns-nameservers " + dns + "\n        dns-search urrunberri-os.openema.local\n"
+    try:
+        with open('/etc/network/interfaces', 'w') as f:
+            f.write(config)
+        subprocess.Popen(['ifdown', 'enp3s0'], stderr=subprocess.DEVNULL)
+        time.sleep(1)
+        subprocess.Popen(['ifup', 'enp3s0'], stderr=subprocess.DEVNULL)
+        return True
+    except:
+        return False
+
+def scan_wifi():
+    import subprocess, re
+    try:
+        out = subprocess.check_output(['iwlist', 'wlp1s0', 'scan'], text=True, stderr=subprocess.DEVNULL, timeout=15)
+        networks = []
+        for cell in out.split('Cell ')[1:]:
+            ssid = re.search(r'ESSID:"([^"]*)"', cell)
+            signal = re.search(r'Signal level=(-?[\d]+)', cell)
+            quality = re.search(r'Quality=([\d]+)/([\d]+)', cell)
+            enc = 'WPA' if 'WPA' in cell else ('WEP' if 'WEP' in cell else 'Open')
+            if ssid and ssid.group(1):
+                q = int(quality.group(1)) * 100 // int(quality.group(2)) if quality else 0
+                networks.append({'ssid': ssid.group(1), 'signal': signal.group(1) if signal else '0', 'quality': q, 'encryption': enc})
+        networks.sort(key=lambda x: x['quality'], reverse=True)
+        return networks
+    except:
+        return []
+
+def run():
+    os.makedirs('/etc/urrunberri-os', exist_ok=True)
+    if not os.path.exists(SAVED_FILE):
+        open(SAVED_FILE, 'w').close()
+    server = http.server.HTTPServer(('127.0.0.1', PORT), UrrunBerriHandler)
+    print(f"[UrrunBerri OS] API server running on port {PORT} (hardened)")
+    server.serve_forever()
+
+if __name__ == '__main__':
+    run()

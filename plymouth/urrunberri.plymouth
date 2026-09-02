@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=UrrunBerri OS
+Description=Theme de demarrage UrrunBerri OS — Openema SARL
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/urrunberri
+ScriptFile=/usr/share/plymouth/themes/urrunberri/urrunberri.script
