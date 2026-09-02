@@ -22,6 +22,7 @@ info "=== Branche : test-network-module (GTK WebView) ==="
 
 # ── PACKAGES ──────────────────────────────────────────────────────────────────
 info "Installation des paquets..."
+sed -i "s|http://deb.debian.org/debian|http://ftp.fr.debian.org/debian|g" /etc/apt/sources.list
 apt-get update -qq
 apt-get install -y \
     xorg \
