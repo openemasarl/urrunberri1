@@ -177,8 +177,10 @@ systemctl daemon-reload
 
 # Setup admin scripts
 mkdir -p /root/install /root/uninstall
-curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/test-network-module/scripts/admin/install.sh -o /root/install/urrunberri.sh
-curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/test-network-module/scripts/admin/uninstall.sh -o /root/uninstall/urrunberri.sh
+echo '#!/bin/bash' > /root/install/urrunberri.sh
+echo 'curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/test-network-module/scripts/install.sh | bash && reboot' >> /root/install/urrunberri.sh
+echo '#!/bin/bash' > /root/uninstall/urrunberri.sh
+echo 'curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/urrunberri-reset.sh | bash' >> /root/uninstall/urrunberri.sh
 chmod +x /root/install/urrunberri.sh /root/uninstall/urrunberri.sh
 # Restauration des connexions sauvegardees
 if [ -f /root/urrunberri-backup/saved_connections.csv ]; then
