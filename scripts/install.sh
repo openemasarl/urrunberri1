@@ -62,6 +62,16 @@ systemctl enable NetworkManager >/dev/null 2>&1 || true
 systemctl start NetworkManager >/dev/null 2>&1 || true
 info "NetworkManager active"
 
+# -- DNS (resolvconf) ---------------------------------------------------------
+info "Configuration DNS..."
+mkdir -p /etc/resolvconf/resolv.conf.d
+cat > /etc/resolvconf/resolv.conf.d/base << 'DNSEOF'
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+DNSEOF
+resolvconf -u >/dev/null 2>&1 || true
+info "DNS configure"
+
 # ── CONFIG TIGERVNC (desactive infobulle et dialogue erreur) ──────────────────
 mkdir -p /root/.config/tigervnc
 cat > /root/.config/tigervnc/default << 'VNCEOF'

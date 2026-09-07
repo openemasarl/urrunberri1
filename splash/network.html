@@ -238,6 +238,8 @@ function setMethod(m) {
   document.getElementById('btn-dhcp').classList.toggle('active', m === 'dhcp');
   document.getElementById('btn-static').classList.toggle('active', m === 'static');
   document.getElementById('static-fields').classList.toggle('show', m === 'static');
+  var t = i18n[lang] || i18n.fr;
+  document.getElementById('eth-method').textContent = (m === 'dhcp') ? t.dhcp : t.static;
 }
 
 function loadStatus() {
