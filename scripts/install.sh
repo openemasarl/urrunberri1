@@ -46,8 +46,21 @@ apt-get install -y \
     fonts-dejavu \
     plymouth \
     plymouth-themes \
-    curl
+    curl \
+    network-manager \
+    resolvconf
 info "Paquets installes"
+
+# -- NETWORKMANAGER (requis par le module Wi-Fi) ------------------------------
+info "Configuration de NetworkManager..."
+mkdir -p /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/no-dns.conf << 'NMEOF'
+[main]
+dns=none
+NMEOF
+systemctl enable NetworkManager >/dev/null 2>&1 || true
+systemctl start NetworkManager >/dev/null 2>&1 || true
+info "NetworkManager active"
 
 # ── CONFIG TIGERVNC (desactive infobulle et dialogue erreur) ──────────────────
 mkdir -p /root/.config/tigervnc

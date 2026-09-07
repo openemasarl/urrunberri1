@@ -324,9 +324,9 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
             import subprocess
             try:
                 if password:
-                    r = subprocess.run(['nmcli', 'device', 'wifi', 'connect', ssid, 'password', password, 'ifname', 'wlp1s0'], capture_output=True, text=True, timeout=30)
+                    r = subprocess.run(['nmcli', 'device', 'wifi', 'connect', ssid, 'password', password, 'ifname', (wifi_iface() or 'wlp1s0')], capture_output=True, text=True, timeout=30)
                 else:
-                    r = subprocess.run(['nmcli', 'device', 'wifi', 'connect', ssid, 'ifname', 'wlp1s0'], capture_output=True, text=True, timeout=30)
+                    r = subprocess.run(['nmcli', 'device', 'wifi', 'connect', ssid, 'ifname', (wifi_iface() or 'wlp1s0')], capture_output=True, text=True, timeout=30)
                 self.send_cors('ok' if r.returncode == 0 else 'error: ' + r.stderr)
             except Exception as e:
                 self.send_cors('error: ' + str(e))
@@ -334,7 +334,7 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
         if path == '/wifi-disconnect':
             import subprocess
             try:
-                subprocess.run(['nmcli', 'device', 'disconnect', 'wlp1s0'], capture_output=True, text=True)
+                subprocess.run(['nmcli', 'device', 'disconnect', (wifi_iface() or 'wlp1s0')], capture_output=True, text=True)
                 self.send_cors('ok')
             except:
                 self.send_cors('error')
@@ -459,6 +459,7 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
             return
         if path == '/network':
             self.send_json(get_network_status())
+            return
         if path == '/wifi-scan':
             self.send_json(scan_wifi())
             return
@@ -471,18 +472,19 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
 def get_network_status():
     import subprocess, re
     result = {}
+    eth = eth_iface() or 'eth0'
     try:
-        ip_out = subprocess.check_output(['ip', 'addr', 'show', 'enp3s0'], text=True, stderr=subprocess.DEVNULL)
+        ip_out = subprocess.check_output(['ip', 'addr', 'show', eth], text=True, stderr=subprocess.DEVNULL)
         inet = re.search(r'inet ([\d.]+)/([\d]+)', ip_out)
         state = 'up' if 'state UP' in ip_out else 'down'
         result['ethernet'] = {
-            'interface': 'enp3s0',
+            'interface': eth,
             'state': state,
             'ip': inet.group(1) if inet else '',
             'prefix': inet.group(2) if inet else '24',
         }
     except:
-        result['ethernet'] = {'interface': 'enp3s0', 'state': 'down', 'ip': '', 'prefix': '24'}
+        result['ethernet'] = {'interface': eth, 'state': 'down', 'ip': '', 'prefix': '24'}
     try:
         with open('/etc/network/interfaces', 'r') as f:
             ifaces = f.read()
@@ -496,47 +498,107 @@ def get_network_status():
             result['ethernet']['dns'] = dns.group(1).strip().split()[0] if dns else ''
     except:
         result['ethernet']['method'] = 'unknown'
+    dev = wifi_iface()
     try:
-        wifi_ip = subprocess.check_output(['ip', 'addr', 'show', 'wlp1s0'], text=True, stderr=subprocess.DEVNULL)
+        if not dev:
+            raise Exception('no wifi device')
+        wifi_ip = subprocess.check_output(['ip', 'addr', 'show', dev], text=True, stderr=subprocess.DEVNULL)
         wifi_inet = re.search(r'inet ([\d.]+)/([\d]+)', wifi_ip)
         wifi_state = 'up' if 'state UP' in wifi_ip else 'down'
-        result['wifi'] = {'interface': 'wlp1s0', 'state': wifi_state, 'ip': wifi_inet.group(1) if wifi_inet else '', 'ssid': ''}
-    except:
-        result['wifi'] = {'interface': 'wlp1s0', 'state': 'unavailable', 'ip': '', 'ssid': ''}
+        ssid = ''
+        try:
+            nm = subprocess.check_output(['nmcli', '-t', '-f', 'DEVICE,STATE,CONNECTION', 'dev', 'status'], text=True, timeout=10)
+            for line in nm.splitlines():
+                parts = line.split(':')
+                if len(parts) >= 3 and parts[0] == dev and parts[1] == 'connected':
+                    ssid = parts[2]
+                    wifi_state = 'up'
+        except Exception:
+            pass
+        result['wifi'] = {'interface': dev, 'state': wifi_state, 'ip': wifi_inet.group(1) if wifi_inet else '', 'ssid': ssid}
+    except Exception:
+        result['wifi'] = {'interface': dev or '', 'state': 'unavailable', 'ip': '', 'ssid': ''}
     return result
 
 def apply_ethernet_config(method, ip='', prefix='24', gateway='', dns='8.8.8.8'):
+    eth = eth_iface() or 'eth0'
     import subprocess, time
     if method == 'dhcp':
-        config = "source /etc/network/interfaces.d/*\nauto lo\niface lo inet loopback\nauto enp3s0\niface enp3s0 inet dhcp\n"
+        config = "source /etc/network/interfaces.d/*\nauto lo\niface lo inet loopback\nauto " + eth + "\niface " + eth + " inet dhcp\n"
     else:
-        config = "source /etc/network/interfaces.d/*\nauto lo\niface lo inet loopback\nallow-hotplug enp3s0\niface enp3s0 inet static\n        address " + ip + "/" + prefix + "\n        gateway " + gateway + "\n        dns-nameservers " + dns + "\n        dns-search urrunberri-os.openema.local\n"
+        config = "source /etc/network/interfaces.d/*\nauto lo\niface lo inet loopback\nallow-hotplug " + eth + "\niface " + eth + " inet static\n        address " + ip + "/" + prefix + "\n        gateway " + gateway + "\n        dns-nameservers " + dns + "\n"
     try:
         with open('/etc/network/interfaces', 'w') as f:
             f.write(config)
-        subprocess.Popen(['ifdown', 'enp3s0'], stderr=subprocess.DEVNULL)
+        subprocess.Popen(['ifdown', eth], stderr=subprocess.DEVNULL)
         time.sleep(1)
-        subprocess.Popen(['ifup', 'enp3s0'], stderr=subprocess.DEVNULL)
+        subprocess.Popen(['ifup', eth], stderr=subprocess.DEVNULL)
         return True
     except:
         return False
 
-def scan_wifi():
+def wifi_iface():
     import subprocess, re
     try:
-        out = subprocess.check_output(['iwlist', 'wlp1s0', 'scan'], text=True, stderr=subprocess.DEVNULL, timeout=15)
-        networks = []
-        for cell in out.split('Cell ')[1:]:
-            ssid = re.search(r'ESSID:"([^"]*)"', cell)
-            signal = re.search(r'Signal level=(-?[\d]+)', cell)
-            quality = re.search(r'Quality=([\d]+)/([\d]+)', cell)
-            enc = 'WPA' if 'WPA' in cell else ('WEP' if 'WEP' in cell else 'Open')
-            if ssid and ssid.group(1):
-                q = int(quality.group(1)) * 100 // int(quality.group(2)) if quality else 0
-                networks.append({'ssid': ssid.group(1), 'signal': signal.group(1) if signal else '0', 'quality': q, 'encryption': enc})
-        networks.sort(key=lambda x: x['quality'], reverse=True)
-        return networks
-    except:
+        out = subprocess.check_output(['nmcli', '-t', '-f', 'DEVICE,TYPE', 'dev', 'status'], text=True, timeout=10)
+    except Exception:
+        return None
+    devs = []
+    for line in out.splitlines():
+        parts = line.split(':')
+        if len(parts) >= 2 and parts[1] == 'wifi' and not parts[0].startswith('p2p'):
+            devs.append(parts[0])
+    for d in devs:
+        if d.startswith('wlx'):
+            return d
+    return devs[0] if devs else None
+
+def eth_iface():
+    """Detecte l'interface filaire active. Aucun nom code en dur."""
+    import subprocess, re
+    try:
+        out = subprocess.check_output(['ip', '-o', 'link', 'show'], text=True, timeout=10)
+    except Exception:
+        return None
+    cands = []
+    for line in out.splitlines():
+        m = re.match(r'\d+:\s+([^:@]+)', line)
+        if not m:
+            continue
+        name = m.group(1).strip()
+        if name == 'lo' or name.startswith(('wl', 'p2p', 'docker', 'veth', 'br-', 'virbr', 'tun', 'tap')):
+            continue
+        cands.append((name, 'state UP' in line))
+    for name, up in cands:
+        if up:
+            return name
+    return cands[0][0] if cands else None
+
+def scan_wifi():
+    import subprocess
+    try:
+        dev = wifi_iface()
+        if not dev:
+            return []
+        out = subprocess.check_output(
+            ['nmcli', '-t', '-f', 'SSID,SIGNAL,SECURITY', 'dev', 'wifi', 'list', 'ifname', dev],
+            text=True, stderr=subprocess.DEVNULL, timeout=20)
+        best = {}
+        for line in out.splitlines():
+            parts = line.rsplit(':', 2)
+            if len(parts) != 3:
+                continue
+            ssid, sig, sec = parts[0], parts[1], parts[2]
+            if not ssid or ssid == '--':
+                continue
+            q = int(sig) if sig.isdigit() else 0
+            if ssid not in best or q > best[ssid]['quality']:
+                best[ssid] = {'ssid': ssid, 'signal': str(q), 'quality': q,
+                              'encryption': sec if sec else 'Open'}
+        nets = list(best.values())
+        nets.sort(key=lambda x: x['quality'], reverse=True)
+        return nets
+    except Exception:
         return []
 
 def run():
