@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UrrunBerri OS — Paramètres</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #eef2f7;
+  color: #1a2744;
+  min-height: 100vh;
+  padding: 20px 16px;
+}
+.page-wrap { max-width: 520px; margin: 0 auto; }
+.logo-wrap { text-align: center; margin-bottom: 14px; }
+.logo-wrap img { height: 38px; }
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  color: #2352be; font-size: 13px; font-weight: 600;
+  cursor: pointer; margin-bottom: 12px;
+  background: none; border: none;
+  font-family: 'DM Sans', sans-serif; padding: 0;
+}
+.back-btn:hover { opacity: 0.75; }
+.langs {
+  display: flex; justify-content: center;
+  gap: 6px; margin-bottom: 12px;
+}
+.lang-btn {
+  background: none; border: 1px solid #c5d0e8;
+  border-radius: 6px; padding: 3px 10px;
+  font-size: 12px; font-weight: 600; color: #5a6a8a;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.lang-btn.active, .lang-btn:hover {
+  background: rgba(35,82,190,0.12); color: #2352be; border-color: #2352be;
+}
+h1 {
+  text-align: center; font-size: 18px; font-weight: 700;
+  color: #2352be; margin-bottom: 14px;
+}
+.card {
+  background: #fff; border-radius: 14px; padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 12px rgba(35,82,190,0.07);
+}
+.card-title {
+  font-size: 13px; font-weight: 700; color: #2352be;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.status-dot {
+  width: 9px; height: 9px; border-radius: 50%; display: inline-block;
+}
+.status-dot.up { background: #22c55e; }
+.status-dot.down { background: #ef4444; }
+.status-dot.unavailable { background: #94a3b8; }
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid #f0f4fb; font-size: 13px;
+}
+.info-row:last-of-type { border-bottom: none; }
+.info-label { color: #5a6a8a; font-weight: 500; }
+.info-value { font-weight: 600; font-family: monospace; font-size: 12px; }
+.method-toggle { display: flex; gap: 8px; margin: 12px 0 10px; }
+.method-btn {
+  flex: 1; padding: 8px; border: 1.5px solid #c5d0e8;
+  border-radius: 8px; background: #f0f4fb;
+  font-size: 13px; font-weight: 600; color: #5a6a8a;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+}
+.method-btn.active {
+  background: rgba(35,82,190,0.12); border-color: #2352be; color: #2352be;
+}
+.form-group { margin-bottom: 10px; }
+label { display: block; font-size: 11px; font-weight: 600; color: #5a6a8a; margin-bottom: 3px; }
+input[type=text], input[type=number] {
+  width: 100%; padding: 8px 10px;
+  border: 1.5px solid #c5d0e8; border-radius: 8px;
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  color: #1a2744; background: #f0f4fb; outline: none;
+}
+input:focus { border-color: #2352be; background: #fff; }
+.static-fields { display: none; }
+.static-fields.show { display: block; }
+.btn {
+  width: 100%; padding: 10px; border: none; border-radius: 10px;
+  background: #2352be; color: #fff; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 4px;
+}
+.btn:hover { background: #1a3fa0; }
+.btn:disabled { background: #a0b0d0; cursor: not-allowed; }
+.btn-secondary {
+  background: #f0f4fb; color: #2352be;
+  border: 1.5px solid #c5d0e8; margin-top: 6px;
+}
+.btn-secondary:hover { background: rgba(35,82,190,0.12); }
+.msg {
+  padding: 8px 12px; border-radius: 8px; font-size: 12px;
+  font-weight: 500; margin-top: 8px; display: none;
+}
+.msg.success { background: #e6f4ea; color: #1a7f37; display: block; }
+.msg.error { background: #fdecea; color: #c0392b; display: block; }
+.msg.info { background: rgba(35,82,190,0.08); color: #2352be; display: block; }
+.wifi-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; border-radius: 8px; margin-bottom: 5px;
+  background: #f0f4fb; font-size: 12px; cursor: pointer;
+}
+.wifi-item:hover { background: rgba(35,82,190,0.1); }
+.wifi-ssid { font-weight: 600; }
+.wifi-signal { font-size: 11px; color: #5a6a8a; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="logo-wrap">
+    <img src="/splash/urrunberri.png" alt="UrrunBerri OS">
+  </div>
+  <button class="back-btn" onclick="window.history.back()">← <span id="lbl-back">Retour</span></button>
+  <div class="langs">
+    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+  </div>
+  <h1 id="lbl-title">Configuration Réseau</h1>
+
+  <!-- ETHERNET -->
+  <div class="card">
+    <div class="card-title">
+      🖧 <span id="lbl-ethernet">Ethernet</span>
+      <span class="status-dot" id="eth-dot"></span>
+      <span id="eth-state" style="font-size:11px;font-weight:500;color:#5a6a8a;"></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">IP</span>
+      <span class="info-value" id="eth-ip">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label" id="lbl-method">Méthode</span>
+      <span class="info-value" id="eth-method">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label" id="lbl-gateway">Passerelle</span>
+      <span class="info-value" id="eth-gw">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">DNS</span>
+      <span class="info-value" id="eth-dns">—</span>
+    </div>
+    <div class="method-toggle">
+      <button class="method-btn active" id="btn-dhcp" onclick="setMethod('dhcp')">DHCP</button>
+      <button class="method-btn" id="btn-static" onclick="setMethod('static')"><span id="lbl-static-btn">Statique</span></button>
+    </div>
+    <div class="static-fields" id="static-fields">
+      <div class="form-group">
+        <label id="lbl-ip-field">Adresse IP</label>
+        <input type="text" id="inp-ip" placeholder="192.168.1.100">
+      </div>
+      <div class="form-group">
+        <label id="lbl-mask">Masque (préfixe)</label>
+        <input type="number" id="inp-prefix" value="24" min="1" max="32">
+      </div>
+      <div class="form-group">
+        <label id="lbl-gw-field">Passerelle</label>
+        <input type="text" id="inp-gw" placeholder="192.168.1.1">
+      </div>
+      <div class="form-group">
+        <label>DNS</label>
+        <input type="text" id="inp-dns" value="8.8.8.8">
+      </div>
+    </div>
+    <button class="btn" id="btn-apply" onclick="applyEthernet()"><span id="lbl-apply">Appliquer</span></button>
+    <div class="msg" id="eth-msg"></div>
+  </div>
+
+  <!-- WIFI -->
+  <div class="card">
+    <div class="card-title">
+      📶 <span id="lbl-wifi">Wi-Fi</span>
+      <span class="status-dot" id="wifi-dot"></span>
+      <span id="wifi-state" style="font-size:11px;font-weight:500;color:#5a6a8a;"></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">IP</span>
+      <span class="info-value" id="wifi-ip">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">SSID</span>
+      <span class="info-value" id="wifi-ssid">—</span>
+    </div>
+    <button class="btn btn-secondary" onclick="scanWifi()"><span id="lbl-scan">Scanner les réseaux</span></button>
+    <button class="btn btn-secondary" onclick="disconnectWifi()"><span id="lbl-disconnect">Se déconnecter</span></button>
+    <div id="wifi-list" style="margin-top:8px;"></div>
+    <div class="msg" id="wifi-msg"></div>
+  </div>
+</div>
+
+<script>
+const i18n = {
+  fr: { title:'Configuration Réseau', back:'Retour', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Méthode', gateway:'Passerelle', staticbtn:'Statique', ipfield:'Adresse IP', mask:'Masque (préfixe)', gwfield:'Passerelle', apply:'Appliquer', scan:'Scanner les réseaux', disconnect:'Se déconnecter', up:'Connecté', down:'Déconnecté', unavailable:'Non disponible', applying:'Application...', success:'Configuration appliquée.', error:'Erreur.', scanning:'Scan en cours...', noscan:'Aucun réseau trouvé.', dhcp:'DHCP', static:'Statique' },
+  en: { title:'Network Settings', back:'Back', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Method', gateway:'Gateway', staticbtn:'Static', ipfield:'IP Address', mask:'Mask (prefix)', gwfield:'Gateway', apply:'Apply', scan:'Scan networks', disconnect:'Disconnect', up:'Connected', down:'Disconnected', unavailable:'Unavailable', applying:'Applying...', success:'Configuration applied.', error:'Error.', scanning:'Scanning...', noscan:'No networks found.', dhcp:'DHCP', static:'Static' },
+  es: { title:'Configuración de Red', back:'Volver', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Método', gateway:'Puerta de enlace', staticbtn:'Estática', ipfield:'Dirección IP', mask:'Máscara (prefijo)', gwfield:'Puerta de enlace', apply:'Aplicar', scan:'Escanear redes', disconnect:'Desconectar', up:'Conectado', down:'Desconectado', unavailable:'No disponible', applying:'Aplicando...', success:'Configuración aplicada.', error:'Error.', scanning:'Escaneando...', noscan:'No se encontraron redes.', dhcp:'DHCP', static:'Estática' },
+  eu: { title:'Sare Konfigurazioa', back:'Itzuli', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Metodoa', gateway:'Atebidea', staticbtn:'Estatikoa', ipfield:'IP helbidea', mask:'Maskara (aurrizkia)', gwfield:'Atebidea', apply:'Aplikatu', scan:'Sareak eskaneatu', disconnect:'Deskonektatu', up:'Konektatuta', down:'Deskonektatuta', unavailable:'Erabilezina', applying:'Aplikatzen...', success:'Konfigurazioa aplikatuta.', error:'Errorea.', scanning:'Eskaneatzen...', noscan:'Ez da sarerik aurkitu.', dhcp:'DHCP', static:'Estatikoa' }
+};
+
+let lang = 'fr';
+let currentMethod = 'dhcp';
+
+function setLang(l) {
+  lang = l;
+  const t = i18n[l] || i18n.fr;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'" + l + "'"));
+  });
+  document.getElementById('lbl-title').textContent = t.title;
+  document.getElementById('lbl-back').textContent = t.back;
+  document.getElementById('lbl-ethernet').textContent = t.ethernet;
+  document.getElementById('lbl-wifi').textContent = t.wifi;
+  document.getElementById('lbl-method').textContent = t.method;
+  document.getElementById('lbl-gateway').textContent = t.gateway;
+  document.getElementById('lbl-static-btn').textContent = t.staticbtn;
+  document.getElementById('lbl-ip-field').textContent = t.ipfield;
+  document.getElementById('lbl-mask').textContent = t.mask;
+  document.getElementById('lbl-gw-field').textContent = t.gwfield;
+  document.getElementById('lbl-apply').textContent = t.apply;
+  document.getElementById('lbl-scan').textContent = t.scan;
+  document.getElementById('lbl-disconnect').textContent = t.disconnect;
+  document.getElementById('btn-dhcp').textContent = t.dhcp;
+  document.getElementById('eth-method').textContent = currentMethod === 'dhcp' ? t.dhcp : t.static;
+}
+
+function setMethod(m) {
+  currentMethod = m;
+  document.getElementById('btn-dhcp').classList.toggle('active', m === 'dhcp');
+  document.getElementById('btn-static').classList.toggle('active', m === 'static');
+  document.getElementById('static-fields').classList.toggle('show', m === 'static');
+  var t = i18n[lang] || i18n.fr;
+  document.getElementById('eth-method').textContent = (m === 'dhcp') ? t.dhcp : t.static;
+}
+
+function loadStatus() {
+  fetch('http://127.0.0.1:7070/network')
+    .then(r => r.json())
+    .then(data => {
+      const eth = data.ethernet || {};
+      const wifi = data.wifi || {};
+      const t = i18n[lang] || i18n.fr;
+      const ethDot = document.getElementById('eth-dot');
+      ethDot.className = 'status-dot ' + (eth.state || 'down');
+      document.getElementById('eth-state').textContent = eth.state === 'up' ? t.up : t.down;
+      document.getElementById('eth-ip').textContent = eth.ip || '—';
+      document.getElementById('eth-gw').textContent = eth.gateway || '—';
+      document.getElementById('eth-dns').textContent = eth.dns || '—';
+      if (eth.method) {
+        currentMethod = eth.method;
+        setMethod(eth.method);
+        if (eth.method === 'static') {
+          document.getElementById('inp-ip').value = eth.ip || '';
+          document.getElementById('inp-prefix').value = eth.prefix || '24';
+          document.getElementById('inp-gw').value = eth.gateway || '';
+          document.getElementById('inp-dns').value = eth.dns || '8.8.8.8';
+        }
+      }
+      const wifiDot = document.getElementById('wifi-dot');
+      wifiDot.className = 'status-dot ' + (wifi.state || 'unavailable');
+      document.getElementById('wifi-state').textContent = wifi.state === 'up' ? t.up : (wifi.state === 'down' ? t.down : t.unavailable);
+      document.getElementById('wifi-ip').textContent = wifi.ip || '—';
+      document.getElementById('wifi-ssid').textContent = wifi.ssid || '—';
+    })
+    .catch(() => {});
+}
+
+function applyEthernet() {
+  const t = i18n[lang] || i18n.fr;
+  const btn = document.getElementById('btn-apply');
+  const msg = document.getElementById('eth-msg');
+  btn.disabled = true;
+  document.getElementById('lbl-apply').textContent = t.applying;
+  msg.className = 'msg info';
+  msg.textContent = t.applying;
+  fetch('http://127.0.0.1:7070/network-apply', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      method: currentMethod,
+      ip: document.getElementById('inp-ip').value,
+      prefix: document.getElementById('inp-prefix').value,
+      gateway: document.getElementById('inp-gw').value,
+      dns: document.getElementById('inp-dns').value
+    })
+  })
+  .then(r => r.text())
+  .then(res => {
+    msg.className = res.includes('ok') ? 'msg success' : 'msg error';
+    msg.textContent = res.includes('ok') ? t.success : t.error;
+    btn.disabled = false;
+    document.getElementById('lbl-apply').textContent = t.apply;
+    setTimeout(loadStatus, 3000);
+  })
+  .catch(() => {
+    msg.className = 'msg error';
+    msg.textContent = t.error;
+    btn.disabled = false;
+    document.getElementById('lbl-apply').textContent = t.apply;
+  });
+}
+
+function scanWifi() {
+  const t = i18n[lang] || i18n.fr;
+  const list = document.getElementById('wifi-list');
+  const msg = document.getElementById('wifi-msg');
+  msg.className = 'msg info';
+  msg.textContent = t.scanning;
+  list.innerHTML = '';
+  fetch('http://127.0.0.1:7070/wifi-scan')
+    .then(r => r.json())
+    .then(networks => {
+      msg.className = 'msg';
+      if (!networks.length) {
+        msg.className = 'msg info';
+        msg.textContent = t.noscan;
+        return;
+      }
+      networks.forEach(n => {
+        const div = document.createElement('div');
+        div.className = 'wifi-item';
+        const bars = n.quality > 66 ? '▂▄▆█' : n.quality > 33 ? '▂▄▆_' : '▂▄__';
+        div.innerHTML = '<span class="wifi-ssid">' + n.ssid + '</span><span class="wifi-signal">' + bars + ' ' + n.quality + '%</span>';
+        div.onclick = () => connectWifi(n.ssid, n.encryption);
+        list.appendChild(div);
+      });
+    })
+    .catch(() => {
+      msg.className = 'msg error';
+      msg.textContent = t.error;
+    });
+}
+
+function connectWifi(ssid, enc) {
+  const msg = document.getElementById('wifi-msg');
+  let password = '';
+  if (enc !== 'Open') {
+    password = prompt('Mot de passe pour ' + ssid + ':');
+    if (password === null) return;
+  }
+  msg.className = 'msg info';
+  msg.textContent = 'Connexion à ' + ssid + '...';
+  fetch('http://127.0.0.1:7070/wifi-connect', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ssid: ssid, password: password})
+  })
+  .then(r => r.text())
+  .then(res => {
+    msg.className = res.includes('ok') ? 'msg success' : 'msg error';
+    msg.textContent = res.includes('ok') ? 'Connecté à ' + ssid : 'Erreur de connexion';
+    if (res.includes('ok')) setTimeout(loadStatus, 3000);
+  })
+  .catch(() => { msg.className = 'msg error'; msg.textContent = 'Erreur'; });
+}
+
+function disconnectWifi() {
+  const msg = document.getElementById('wifi-msg');
+  msg.className = 'msg info';
+  msg.textContent = 'Déconnexion...';
+  fetch('http://127.0.0.1:7070/wifi-disconnect', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: '{}'
+  })
+  .then(() => { msg.className = 'msg success'; msg.textContent = 'Déconnecté'; setTimeout(loadStatus, 2000); })
+  .catch(() => { msg.className = 'msg error'; msg.textContent = 'Erreur'; });
+}
+
+// Init
+fetch('http://127.0.0.1:7070/settings')
+  .then(r => r.json())
+  .then(s => { if (s.lang) setLang(s.lang); })
+  .catch(() => {});
+loadStatus();
+setInterval(loadStatus, 10000);
+</script>
+</body>
+</html>

@@ -228,7 +228,11 @@ numlockx on 2>/dev/null || true
     DOMAIN_ARG=""
     [[ -n "$DOMAIN" ]] && DOMAIN_ARG="/d:${DOMAIN}"
     MULTIMON_ARG=""
-    [[ "$MULTIMON" == "1" ]] && MULTIMON_ARG="/multimon"
+    if [[ "$MULTIMON" == "1" ]]; then
+        MULTIMON_ARG="/multimon"
+    else
+        MULTIMON_ARG="/f"
+    fi
     USB_ARG=""
     if [[ "$USB" == "1" ]]; then
         USB_PARENT=$(lsblk -o NAME,TRAN -rn | grep usb | awk '{print $1}' | head -1)

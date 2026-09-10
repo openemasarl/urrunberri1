@@ -22,6 +22,7 @@ info "=== Branche : main (GTK WebView) ==="
 
 # ── PACKAGES ──────────────────────────────────────────────────────────────────
 info "Installation des paquets..."
+sed -i "s|http://deb.debian.org/debian|http://ftp.fr.debian.org/debian|g" /etc/apt/sources.list
 apt-get update -qq
 apt-get install -y \
     xorg \
@@ -45,8 +46,31 @@ apt-get install -y \
     fonts-dejavu \
     plymouth \
     plymouth-themes \
-    curl
+    curl \
+    network-manager \
+    resolvconf
 info "Paquets installes"
+
+# -- NETWORKMANAGER (requis par le module Wi-Fi) ------------------------------
+info "Configuration de NetworkManager..."
+mkdir -p /etc/NetworkManager/conf.d
+cat > /etc/NetworkManager/conf.d/no-dns.conf << 'NMEOF'
+[main]
+dns=none
+NMEOF
+systemctl enable NetworkManager >/dev/null 2>&1 || true
+systemctl start NetworkManager >/dev/null 2>&1 || true
+info "NetworkManager active"
+
+# -- DNS (resolvconf) ---------------------------------------------------------
+info "Configuration DNS..."
+mkdir -p /etc/resolvconf/resolv.conf.d
+cat > /etc/resolvconf/resolv.conf.d/base << 'DNSEOF'
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+DNSEOF
+resolvconf -u >/dev/null 2>&1 || true
+info "DNS configure"
 
 # ── CONFIG TIGERVNC (desactive infobulle et dialogue erreur) ──────────────────
 mkdir -p /root/.config/tigervnc
@@ -141,6 +165,7 @@ curl -fsSL "$GITHUB_RAW/scripts/boot.sh" -o "$INSTALL_DIR/scripts/boot.sh"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_server.py" -o "$INSTALL_DIR/scripts/urrunberri_server.py"
 curl -fsSL "$GITHUB_RAW/scripts/urrunberri_launcher.py" -o "$INSTALL_DIR/scripts/urrunberri_launcher.py"
 curl -fsSL "$GITHUB_RAW/splash/login.html" -o "$INSTALL_DIR/splash/login.html"
+curl -fsSL "$GITHUB_RAW/splash/network.html" -o "$INSTALL_DIR/splash/network.html"
 curl -fsSL "$GITHUB_RAW/client-ui/splash/logo.png" -o "$INSTALL_DIR/splash/logo.png" 2>/dev/null || true
 curl -fsSL "$GITHUB_RAW/client-ui/splash/urrunberri.png" -o "$INSTALL_DIR/splash/urrunberri.png" 2>/dev/null || true
 
@@ -175,8 +200,10 @@ systemctl daemon-reload
 
 # Setup admin scripts
 mkdir -p /root/install /root/uninstall
-curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/install.sh -o /root/install/urrunberri.sh
-curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/admin/uninstall.sh -o /root/uninstall/urrunberri.sh
+echo '#!/bin/bash' > /root/install/urrunberri.sh
+echo 'curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/install.sh | bash && reboot' >> /root/install/urrunberri.sh
+echo '#!/bin/bash' > /root/uninstall/urrunberri.sh
+echo 'curl -fsSL https://raw.githubusercontent.com/openemasarl/urrunberri1/main/scripts/urrunberri-reset.sh | bash' >> /root/uninstall/urrunberri.sh
 chmod +x /root/install/urrunberri.sh /root/uninstall/urrunberri.sh
 # Restauration des connexions sauvegardees
 if [ -f /root/urrunberri-backup/saved_connections.csv ]; then

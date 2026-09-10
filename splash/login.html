@@ -168,6 +168,18 @@ input:focus { border-color: #2352be; background: #fff; }
   cursor: pointer; transition: all 0.2s;
 }
 .btn-restart:hover { background: #c46e00; }
+.btn-network {
+  background: rgba(35,82,190,0.10);
+  color: #2352be;
+  border: 1.5px solid #2352be;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-network:hover { background: rgba(35,82,190,0.20); }
 .error {
   display: none;
   background: rgba(220,53,69,0.08);
@@ -301,6 +313,7 @@ input:focus { border-color: #2352be; background: #fff; }
     <button class="btn-connect" id="btn-connect" onclick="connect()">
       <span id="btn-text">Connexion</span>
     </button>
+    <button class="btn-network" onclick="window.location='http://127.0.0.1:7070/splash/network.html'" id="btn-network">⚙ Réseau</button>
     <button class="btn-stop" onclick="shutdown()" id="btn-stop">⏻ Arrêt</button>
     <button class="btn-restart" onclick="reboot()" id="btn-restart">↺ Redémarrer</button>
   </div>
@@ -314,10 +327,10 @@ input:focus { border-color: #2352be; background: #fff; }
 </div>
 <script>
 const i18n = {
-  fr: { recent:'Connexions recentes', or:'ou nouvelle connexion', ip:'Adresse IP / DNS', port:'Port', user:'Utilisateur', pass:'Mot de passe', proto:'Protocole', res:'Resolution', multimon:'Multi-ecrans', usb:'USB', connect:'Connexion', connecting:'Connexion...', new:'Nouvelle connexion', error:'Veuillez renseigner IP / DNS et utilisateur.', saved:'Connexion sauvegardee.', save:'Sauvegarder', save2:'Sauvegarder cette connexion', del:'Supprimer', delconfirm:'Supprimer cette connexion ?', stop:'Arret', restart:'Redemarrer', shutdownconfirm:'Eteindre la machine ?', rebootconfirm:'Redemarrer la machine ?' },
-  en: { recent:'Recent connections', or:'or new connection', ip:'IP Address / DNS', port:'Port', user:'Username', pass:'Password', proto:'Protocol', res:'Resolution', multimon:'Multi-screen', usb:'USB', connect:'Connect', connecting:'Connecting...', new:'New connection', error:'Please enter IP / DNS and username.', saved:'Connection saved.', save:'Save', save2:'Save this connection', del:'Delete', delconfirm:'Delete this connection?', stop:'Shutdown', restart:'Restart', shutdownconfirm:'Shut down the machine?', rebootconfirm:'Restart the machine?' },
-  es: { recent:'Conexiones recientes', or:'o nueva conexion', ip:'IP / DNS', port:'Puerto', user:'Usuario', pass:'Contrasena', proto:'Protocolo', res:'Resolucion', multimon:'Multi-pantalla', usb:'USB', connect:'Conectar', connecting:'Conectando...', new:'Nueva conexion', error:'Introduce IP / DNS y usuario.', saved:'Conexion guardada.', save:'Guardar', save2:'Guardar esta conexion', del:'Eliminar', delconfirm:'Eliminar esta conexion?', stop:'Apagar', restart:'Reiniciar', shutdownconfirm:'Apagar la maquina?', rebootconfirm:'Reiniciar la maquina?' },
-  eu: { recent:'Azken konexioak', or:'edo konexio berria', ip:'IP / DNS helbidea', port:'Portua', user:'Erabiltzailea', pass:'Pasahitza', proto:'Protokoloa', res:'Bereizmena', multimon:'Pantaila anitz', usb:'USB', connect:'Konektatu', connecting:'Konektatzen...', new:'Konexio berria', error:'Sartu IP / DNS eta erabiltzailea.', saved:'Konexioa gordeta.', save:'Gorde', save2:'Konexio hau gorde', del:'Ezabatu', delconfirm:'Konexio hau ezabatu?', stop:'Itzali', restart:'Berrabiarazi', shutdownconfirm:'Makina itzali?', rebootconfirm:'Makina berrabiarazi?' }
+  fr: { recent:'Connexions recentes', or:'ou nouvelle connexion', ip:'Adresse IP / DNS', port:'Port', user:'Utilisateur', pass:'Mot de passe', proto:'Protocole', res:'Resolution', multimon:'Multi-ecrans', usb:'USB', connect:'Connexion', connecting:'Connexion...', new:'Nouvelle connexion', error:'Veuillez renseigner IP / DNS et utilisateur.', saved:'Connexion sauvegardee.', save:'Sauvegarder', save2:'Sauvegarder cette connexion', del:'Supprimer', delconfirm:'Supprimer cette connexion ?', stop:'Arret', restart:'Redemarrer', network:'Parametres', shutdownconfirm:'Eteindre la machine ?', rebootconfirm:'Redemarrer la machine ?' },
+  en: { recent:'Recent connections', or:'or new connection', ip:'IP Address / DNS', port:'Port', user:'Username', pass:'Password', proto:'Protocol', res:'Resolution', multimon:'Multi-screen', usb:'USB', connect:'Connect', connecting:'Connecting...', new:'New connection', error:'Please enter IP / DNS and username.', saved:'Connection saved.', save:'Save', save2:'Save this connection', del:'Delete', delconfirm:'Delete this connection?', stop:'Shutdown', restart:'Restart', network:'Settings', shutdownconfirm:'Shut down the machine?', rebootconfirm:'Restart the machine?' },
+  es: { recent:'Conexiones recientes', or:'o nueva conexion', ip:'IP / DNS', port:'Puerto', user:'Usuario', pass:'Contrasena', proto:'Protocolo', res:'Resolucion', multimon:'Multi-pantalla', usb:'USB', connect:'Conectar', connecting:'Conectando...', new:'Nueva conexion', error:'Introduce IP / DNS y usuario.', saved:'Conexion guardada.', save:'Guardar', save2:'Guardar esta conexion', del:'Eliminar', delconfirm:'Eliminar esta conexion?', stop:'Apagar', restart:'Reiniciar', network:'Ajustes', shutdownconfirm:'Apagar la maquina?', rebootconfirm:'Reiniciar la maquina?' },
+  eu: { recent:'Azken konexioak', or:'edo konexio berria', ip:'IP / DNS helbidea', port:'Portua', user:'Erabiltzailea', pass:'Pasahitza', proto:'Protokoloa', res:'Bereizmena', multimon:'Pantaila anitz', usb:'USB', connect:'Konektatu', connecting:'Konektatzen...', new:'Konexio berria', error:'Sartu IP / DNS eta erabiltzailea.', saved:'Konexioa gordeta.', save:'Gorde', save2:'Konexio hau gorde', del:'Ezabatu', delconfirm:'Konexio hau ezabatu?', stop:'Itzali', restart:'Berrabiarazi', network:'Ezarpenak', shutdownconfirm:'Makina itzali?', rebootconfirm:'Makina berrabiarazi?' }
 };
 let lang = 'fr';
 function saveSettings() {
@@ -351,6 +364,7 @@ function setLang(l) {
   document.getElementById('btn-delete').textContent = t.del;
   document.getElementById('btn-stop').textContent = '⏻ ' + t.stop;
   document.getElementById('btn-restart').textContent = '↺ ' + t.restart;
+  document.getElementById('btn-network').textContent = '⚙ ' + t.network;
   const sel = document.getElementById('saved-select');
   if (sel.options.length > 0) sel.options[sel.options.length-1].text = t.new;
 }
