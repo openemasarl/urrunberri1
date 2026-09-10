@@ -48,6 +48,7 @@ apt-get install -y \
     plymouth-themes \
     curl \
     network-manager \
+    wpasupplicant \
     resolvconf
 info "Paquets installes"
 

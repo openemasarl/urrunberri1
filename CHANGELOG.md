@@ -2,6 +2,18 @@
 
 Toutes les modifications notables de UrrunBerri OS sont consignees dans ce fichier.
 
+## [1.1.1] — 2026-09-10
+
+### Corrige
+
+- Ajout explicite du paquet wpasupplicant a la liste d'installation. Ce paquet
+  n'etait qu'une recommandation du gestionnaire de reseau, et non une
+  dependance stricte. Lors d'une installation depuis l'image ISO, les
+  recommandations n'etant pas retenues, il etait absent : les interfaces sans
+  fil restaient alors indisponibles et aucune recherche de reseau n'aboutissait.
+  L'installation par script n'etait pas concernee, ce qui rendait le defaut
+  difficile a identifier.
+
 ## [1.1.0] — 2026-09-10
 
 Premiere version integrant le module de configuration reseau.
