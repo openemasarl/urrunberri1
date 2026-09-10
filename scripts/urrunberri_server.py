@@ -3,7 +3,7 @@
 #  UrrunBerri OS — Python API Server (Hardened)
 #  Port 7070 — localhost only
 #  Author : Mathieu Cadi — Openema SARL
-#  GitHub : https://github.com/matthewc00002/urrunberri1
+#  GitHub : https://github.com/openemasarl/urrunberri1
 #
 #  Security: Input sanitization against command injection, delimiter attacks,
 #  and shell metacharacter exploits.

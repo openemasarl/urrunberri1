@@ -3,7 +3,7 @@
 #  UrrunBerri OS — Boot Script (Hardened)
 #  Debian 13 Trixie — Root user — xfreerdp3
 #  Author : Mathieu Cadi — Openema SARL
-#  GitHub : https://github.com/matthewc00002/urrunberri1
+#  GitHub : https://github.com/openemasarl/urrunberri1
 #
 #  Security: All user-supplied variables are quoted to prevent shell injection.
 # =============================================================================

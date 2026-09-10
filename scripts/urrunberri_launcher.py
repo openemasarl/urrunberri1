@@ -3,7 +3,7 @@
 #  UrrunBerri OS — GTK WebView Launcher
 #  Replaces Firefox kiosk for the login interface
 #  Author : Mathieu Cadi — Openema SARL
-#  GitHub : https://github.com/matthewc00002/urrunberri1
+#  GitHub : https://github.com/openemasarl/urrunberri1
 # =============================================================================
 
 import gi
