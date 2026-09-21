@@ -10,6 +10,10 @@ import gi
 import sys
 import signal
 import os
+# Rendu WebKit : desactive les chemins GPU qui produisent une fenetre noire
+# sur les cartes NVIDIA avec le pilote nouveau (ex. GeForce GT 620).
+os.environ.setdefault('WEBKIT_DISABLE_DMABUF_RENDERER', '1')
+os.environ.setdefault('WEBKIT_DISABLE_COMPOSITING_MODE', '1')
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('WebKit2', '4.1')

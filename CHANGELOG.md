@@ -2,6 +2,20 @@
 
 Toutes les modifications notables de UrrunBerri OS sont consignees dans ce fichier.
 
+## [1.1.2-test] — 2026-09-21
+
+### Corrige
+
+- Interface de connexion entierement noire sur les postes equipes d'une carte
+  NVIDIA utilisant le pilote libre nouveau (constate sur GeForce GT 620). Le
+  moteur d'affichage WebKit utilisait un mode de rendu accelere incompatible
+  avec ce pilote. Deux reglages ajoutes au lanceur desactivent ce mode.
+  Valide sur poste ASUS CM6431 apres redemarrage complet.
+
+### A valider avant integration a la branche principale
+
+- Absence de regression sur un poste a carte graphique Intel (ZOTAC).
+
 ## [1.1.1] — 2026-09-10
 
 ### Corrige
