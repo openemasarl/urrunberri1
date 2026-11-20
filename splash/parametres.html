@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>UrrunBerri OS — Paramètres</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#eef2f7;color:#1a2744;min-height:100vh;padding:20px 16px}
+.page-wrap{max-width:520px;margin:0 auto}
+.logo-wrap{text-align:center;margin-bottom:14px}
+.logo-wrap img{height:38px}
+.back-btn{display:flex;align-items:center;gap:6px;color:#2352be;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0}
+.langs{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.lang-btn{background:none;border:1px solid #c5d0e8;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;color:#5a6a8a;cursor:pointer;font-family:'DM Sans',sans-serif}
+.lang-btn.active{background:rgba(35,82,190,0.12);color:#2352be;border-color:#2352be}
+h1{text-align:center;font-size:18px;font-weight:700;color:#2352be;margin-bottom:18px}
+.menu-card{background:#fff;border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(35,82,190,0.07);cursor:pointer;display:flex;align-items:center;gap:16px;transition:all 0.15s}
+.menu-card:hover{background:#f0f4fb;transform:translateY(-1px)}
+.menu-icon{font-size:32px}
+.menu-info{}
+.menu-title{font-size:15px;font-weight:700;color:#1a2744;margin-bottom:3px}
+.menu-desc{font-size:12px;color:#5a6a8a}
+.menu-arrow{margin-left:auto;font-size:18px;color:#c5d0e8}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="logo-wrap"><img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS"></div>
+  <button class="back-btn" onclick="window.history.back()">← <span id="lbl-back">Retour</span></button>
+  <div class="langs">
+    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+  </div>
+  <h1 id="lbl-title">Paramètres</h1>
+  <div class="menu-card" onclick="window.location='http://127.0.0.1:7070/splash/network.html'">
+    <div class="menu-icon">🌐</div>
+    <div class="menu-info">
+      <div class="menu-title" id="lbl-network">Réseau</div>
+      <div class="menu-desc" id="lbl-network-desc">Ethernet, Wi-Fi</div>
+    </div>
+    <div class="menu-arrow">›</div>
+  </div>
+  <div class="menu-card" onclick="window.location='http://127.0.0.1:7070/splash/affichage.html'">
+    <div class="menu-icon">🖥️</div>
+    <div class="menu-info">
+      <div class="menu-title" id="lbl-display">Affichage</div>
+      <div class="menu-desc" id="lbl-display-desc">Résolution, Miroir, Écrans</div>
+    </div>
+    <div class="menu-arrow">›</div>
+  </div>
+</div>
+<script>
+const i18n = {
+  fr:{title:'Paramètres',back:'Retour',network:'Réseau',network_desc:'Ethernet, Wi-Fi',display:'Affichage',display_desc:'Résolution, Miroir, Écrans'},
+  en:{title:'Settings',back:'Back',network:'Network',network_desc:'Ethernet, Wi-Fi',display:'Display',display_desc:'Resolution, Mirror, Screens'},
+  es:{title:'Ajustes',back:'Volver',network:'Red',network_desc:'Ethernet, Wi-Fi',display:'Pantalla',display_desc:'Resolución, Espejo, Pantallas'},
+  eu:{title:'Ezarpenak',back:'Itzuli',network:'Sarea',network_desc:'Ethernet, Wi-Fi',display:'Pantaila',display_desc:'Bereizmena, Ispilua, Pantailak'}
+};
+let lang='fr';
+function setLang(l){
+  lang=l;
+  const t=i18n[l]||i18n.fr;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick').includes("'"+l+"'")));
+  document.getElementById('lbl-title').textContent=t.title;
+  document.getElementById('lbl-back').textContent=t.back;
+  document.getElementById('lbl-network').textContent=t.network;
+  document.getElementById('lbl-network-desc').textContent=t.network_desc;
+  document.getElementById('lbl-display').textContent=t.display;
+  document.getElementById('lbl-display-desc').textContent=t.display_desc;
+}
+fetch('http://127.0.0.1:7070/settings').then(r=>r.json()).then(s=>{if(s.lang)setLang(s.lang);}).catch(()=>{});
+</script>
+</body>
+</html>

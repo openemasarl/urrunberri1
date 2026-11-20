@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>UrrunBerri OS — Affichage</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#eef2f7;color:#1a2744;min-height:100vh;padding:20px 16px}
+.page-wrap{max-width:520px;margin:0 auto}
+.logo-wrap{text-align:center;margin-bottom:14px}
+.logo-wrap img{height:38px}
+.back-btn{display:flex;align-items:center;gap:6px;color:#2352be;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0}
+.langs{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.lang-btn{background:none;border:1px solid #c5d0e8;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;color:#5a6a8a;cursor:pointer;font-family:'DM Sans',sans-serif}
+.lang-btn.active{background:rgba(35,82,190,0.12);color:#2352be;border-color:#2352be}
+h1{text-align:center;font-size:18px;font-weight:700;color:#2352be;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 2px 12px rgba(35,82,190,0.07)}
+.card-title{font-size:13px;font-weight:700;color:#2352be;margin-bottom:12px}
+.btn-row{display:flex;gap:8px;margin-bottom:8px}
+.btn{flex:1;padding:10px;border:none;border-radius:10px;background:#2352be;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn:hover{background:#1a3fa0}
+.btn-secondary{background:#f0f4fb;color:#2352be;border:1.5px solid #c5d0e8}
+.btn-secondary:hover{background:rgba(35,82,190,0.12)}
+.msg{padding:8px 12px;border-radius:8px;font-size:12px;font-weight:500;margin-top:8px;display:none}
+.msg.success{background:#e6f4ea;color:#1a7f37;display:block}
+.msg.error{background:#fdecea;color:#c0392b;display:block}
+.msg.info{background:rgba(35,82,190,0.08);color:#2352be;display:block}
+.form-group{margin-bottom:10px}
+label{display:block;font-size:11px;font-weight:600;color:#5a6a8a;margin-bottom:3px}
+select{width:100%;padding:8px 10px;border:1.5px solid #c5d0e8;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:#1a2744;background:#f0f4fb;outline:none}
+select:focus{border-color:#2352be;background:#fff}
+.screen-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:#f0f4fb;margin-bottom:6px;font-size:12px}
+.screen-name{font-weight:600}
+.screen-toggle{display:flex;gap:6px}
+.toggle-btn{padding:4px 10px;border-radius:6px;border:1px solid #c5d0e8;background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.toggle-btn.active{background:#2352be;color:#fff;border-color:#2352be}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="logo-wrap"><img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS"></div>
+  <button class="back-btn" onclick="window.location='http://127.0.0.1:7070/splash/parametres.html'">← <span id="lbl-back">Retour</span></button>
+  <div class="langs">
+    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+  </div>
+  <h1 id="lbl-title">Affichage</h1>
+  <div class="card">
+    <div class="card-title" id="lbl-mode-title">Mode d'affichage</div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="setScreen('mirror')" id="btn-mirror"><span id="lbl-mirror">Miroir</span></button>
+      <button class="btn btn-secondary" onclick="setScreen('extend')" id="btn-extend"><span id="lbl-extend">Étendu</span></button>
+    </div>
+    <div class="msg" id="mode-msg"></div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="lbl-res-title">Résolution</div>
+    <div class="form-group">
+      <label id="lbl-screen-sel">Écran</label>
+      <select id="screen-select" onchange="loadResolutions()"></select>
+    </div>
+    <div class="form-group">
+      <label id="lbl-res-sel">Résolution</label>
+      <select id="res-select"></select>
+    </div>
+    <button class="btn" onclick="applyResolution()"><span id="lbl-apply">Appliquer</span></button>
+    <div class="msg" id="res-msg"></div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="lbl-screens-title">Écrans connectés</div>
+    <div id="screens-list"></div>
+    <div class="msg" id="screens-msg"></div>
+  </div>
+</div>
+<script>
+const i18n={
+  fr:{title:'Affichage',back:'Retour',mode:'Mode d\'affichage',mirror:'Miroir',extend:'Étendu',res_title:'Résolution',screen_sel:'Écran',res_sel:'Résolution',apply:'Appliquer',screens_title:'Écrans connectés',on:'Actif',off:'Inactif',mirror_ok:'Mode miroir activé.',extend_ok:'Mode étendu activé.',res_ok:'Résolution appliquée.',error:'Erreur.'},
+  en:{title:'Display',back:'Back',mode:'Display mode',mirror:'Mirror',extend:'Extended',res_title:'Resolution',screen_sel:'Screen',res_sel:'Resolution',apply:'Apply',screens_title:'Connected screens',on:'On',off:'Off',mirror_ok:'Mirror mode enabled.',extend_ok:'Extended mode enabled.',res_ok:'Resolution applied.',error:'Error.'},
+  es:{title:'Pantalla',back:'Volver',mode:'Modo de pantalla',mirror:'Espejo',extend:'Extendido',res_title:'Resolución',screen_sel:'Pantalla',res_sel:'Resolución',apply:'Aplicar',screens_title:'Pantallas conectadas',on:'Activo',off:'Inactivo',mirror_ok:'Modo espejo activado.',extend_ok:'Modo extendido activado.',res_ok:'Resolución aplicada.',error:'Error.'},
+  eu:{title:'Pantaila',back:'Itzuli',mode:'Pantaila modua',mirror:'Ispilua',extend:'Zabaldua',res_title:'Bereizmena',screen_sel:'Pantaila',res_sel:'Bereizmena',apply:'Aplikatu',screens_title:'Konektatutako pantailak',on:'Aktibo',off:'Inaktibo',mirror_ok:'Ispilu modua aktibatuta.',extend_ok:'Zabaldu modua aktibatuta.',res_ok:'Bereizmena aplikatuta.',error:'Errorea.'}
+};
+let lang='fr';
+let screensData=[];
+function setLang(l){
+  lang=l;const t=i18n[l]||i18n.fr;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick').includes("'"+l+"'")));
+  document.getElementById('lbl-title').textContent=t.title;
+  document.getElementById('lbl-back').textContent=t.back;
+  document.getElementById('lbl-mode-title').textContent=t.mode;
+  document.getElementById('lbl-mirror').textContent=t.mirror;
+  document.getElementById('lbl-extend').textContent=t.extend;
+  document.getElementById('lbl-res-title').textContent=t.res_title;
+  document.getElementById('lbl-screen-sel').textContent=t.screen_sel;
+  document.getElementById('lbl-res-sel').textContent=t.res_sel;
+  document.getElementById('lbl-apply').textContent=t.apply;
+  document.getElementById('lbl-screens-title').textContent=t.screens_title;
+}
+function setScreen(mode){
+  const msg=document.getElementById('mode-msg');
+  const t=i18n[lang]||i18n.fr;
+  msg.className='msg info';msg.textContent='...';
+  fetch('http://127.0.0.1:7070/screen-mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode})})
+  .then(r=>r.text()).then(res=>{
+    msg.className=res.includes('ok')?'msg success':'msg error';
+    msg.textContent=res.includes('ok')?(mode==='mirror'?t.mirror_ok:t.extend_ok):t.error;
+    setTimeout(loadScreens,2000);
+  }).catch(()=>{msg.className='msg error';msg.textContent=t.error;});
+}
+function loadScreens(){
+  fetch('http://127.0.0.1:7070/screens').then(r=>r.json()).then(data=>{
+    screensData=data;
+    const sel=document.getElementById('screen-select');
+    sel.innerHTML='';
+    data.forEach(s=>{sel.innerHTML+=`<option value="${s.name}">${s.name} (${s.current||'off'})</option>`;});
+    loadResolutions();
+    renderScreensList(data);
+  }).catch(()=>{});
+}
+function loadResolutions(){
+  const name=document.getElementById('screen-select').value;
+  const screen=screensData.find(s=>s.name===name);
+  const sel=document.getElementById('res-select');
+  sel.innerHTML='';
+  if(screen&&screen.modes){
+    screen.modes.forEach(m=>{
+      const opt=document.createElement('option');
+      opt.value=m;opt.textContent=m;
+      if(m===screen.current)opt.selected=true;
+      sel.appendChild(opt);
+    });
+  }
+}
+function applyResolution(){
+  const name=document.getElementById('screen-select').value;
+  const res=document.getElementById('res-select').value;
+  const msg=document.getElementById('res-msg');
+  const t=i18n[lang]||i18n.fr;
+  msg.className='msg info';msg.textContent='...';
+  fetch('http://127.0.0.1:7070/screen-res',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({output:name,resolution:res})})
+  .then(r=>r.text()).then(res2=>{
+    msg.className=res2.includes('ok')?'msg success':'msg error';
+    msg.textContent=res2.includes('ok')?t.res_ok:t.error;
+    setTimeout(loadScreens,2000);
+  }).catch(()=>{msg.className='msg error';msg.textContent=t.error;});
+}
+function toggleScreen(name,action){
+  const msg=document.getElementById('screens-msg');
+  msg.className='msg info';msg.textContent='...';
+  fetch('http://127.0.0.1:7070/screen-toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({output:name,action:action})})
+  .then(r=>r.text()).then(res=>{
+    msg.className=res.includes('ok')?'msg success':'msg error';
+    msg.textContent=res.includes('ok')?'OK':i18n[lang].error;
+    setTimeout(loadScreens,2000);
+  }).catch(()=>{msg.className='msg error';msg.textContent=i18n[lang].error;});
+}
+function renderScreensList(data){
+  const t=i18n[lang]||i18n.fr;
+  const list=document.getElementById('screens-list');
+  list.innerHTML='';
+  data.forEach(s=>{
+    const isOn=s.active;
+    list.innerHTML+=`<div class="screen-item">
+      <span class="screen-name">${s.name}</span>
+      <div class="screen-toggle">
+        <button class="toggle-btn${isOn?' active':''}" onclick="toggleScreen('${s.name}','on')">${t.on}</button>
+        <button class="toggle-btn${!isOn?' active':''}" onclick="toggleScreen('${s.name}','off')">${t.off}</button>
+      </div>
+    </div>`;
+  });
+}
+fetch('http://127.0.0.1:7070/settings').then(r=>r.json()).then(s=>{if(s.lang)setLang(s.lang);}).catch(()=>{});
+loadScreens();
+</script>
+</body>
+</html>

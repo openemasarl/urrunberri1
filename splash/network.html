@@ -76,7 +76,7 @@ h1 {
 }
 .form-group { margin-bottom: 10px; }
 label { display: block; font-size: 11px; font-weight: 600; color: #5a6a8a; margin-bottom: 3px; }
-input[type=text], input[type=number] {
+input[type=text], input[type=number], input[type=password], select {
   width: 100%; padding: 8px 10px;
   border: 1.5px solid #c5d0e8; border-radius: 8px;
   font-size: 13px; font-family: 'DM Sans', sans-serif;
@@ -85,6 +85,13 @@ input[type=text], input[type=number] {
 input:focus { border-color: #2352be; background: #fff; }
 .static-fields { display: none; }
 .static-fields.show { display: block; }
+.hidden-form {
+  display: none; margin-top: 10px; padding: 12px;
+  border: 1.5px dashed #c5d0e8; border-radius: 10px; background: #f8faff;
+}
+.hidden-form.show { display: block; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
 .btn {
   width: 100%; padding: 10px; border: none; border-radius: 10px;
   background: #2352be; color: #fff; font-size: 13px; font-weight: 700;
@@ -193,7 +200,33 @@ input:focus { border-color: #2352be; background: #fff; }
       <span class="info-value" id="wifi-ssid">—</span>
     </div>
     <button class="btn btn-secondary" onclick="scanWifi()"><span id="lbl-scan">Scanner les réseaux</span></button>
+    <button class="btn btn-secondary" onclick="toggleHidden()"><span id="lbl-hidden">Réseau masqué</span></button>
     <button class="btn btn-secondary" onclick="disconnectWifi()"><span id="lbl-disconnect">Se déconnecter</span></button>
+    <div class="hidden-form" id="hidden-form">
+      <div class="form-group">
+        <label for="inp-hssid" id="lbl-hssid">Nom du réseau (SSID)</label>
+        <input type="text" id="inp-hssid" maxlength="32" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="form-group">
+        <label for="sel-hsec" id="lbl-hsec">Sécurité</label>
+        <select id="sel-hsec" onchange="onSecChange()">
+          <option value="wpa-psk" id="opt-wpa">WPA/WPA2 Personnel</option>
+          <option value="open" id="opt-open">Aucune (réseau ouvert)</option>
+        </select>
+      </div>
+      <div class="form-group" id="grp-hpass">
+        <label for="inp-hpass" id="lbl-hpass">Mot de passe</label>
+        <input type="password" id="inp-hpass" maxlength="64" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="sel-hiface" id="lbl-hiface">Carte Wi-Fi</label>
+        <select id="sel-hiface"><option value="" id="opt-auto">Automatique</option></select>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btn-hconnect" onclick="connectHidden()"><span id="lbl-hconnect">Se connecter</span></button>
+        <button class="btn btn-secondary" onclick="toggleHidden(false)"><span id="lbl-hcancel">Annuler</span></button>
+      </div>
+    </div>
     <div id="wifi-list" style="margin-top:8px;"></div>
     <div class="msg" id="wifi-msg"></div>
   </div>
@@ -201,10 +234,10 @@ input:focus { border-color: #2352be; background: #fff; }
 
 <script>
 const i18n = {
-  fr: { title:'Configuration Réseau', back:'Retour', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Méthode', gateway:'Passerelle', staticbtn:'Statique', ipfield:'Adresse IP', mask:'Masque (préfixe)', gwfield:'Passerelle', apply:'Appliquer', scan:'Scanner les réseaux', disconnect:'Se déconnecter', up:'Connecté', down:'Déconnecté', unavailable:'Non disponible', applying:'Application...', success:'Configuration appliquée.', error:'Erreur.', scanning:'Scan en cours...', noscan:'Aucun réseau trouvé.', dhcp:'DHCP', static:'Statique' },
-  en: { title:'Network Settings', back:'Back', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Method', gateway:'Gateway', staticbtn:'Static', ipfield:'IP Address', mask:'Mask (prefix)', gwfield:'Gateway', apply:'Apply', scan:'Scan networks', disconnect:'Disconnect', up:'Connected', down:'Disconnected', unavailable:'Unavailable', applying:'Applying...', success:'Configuration applied.', error:'Error.', scanning:'Scanning...', noscan:'No networks found.', dhcp:'DHCP', static:'Static' },
-  es: { title:'Configuración de Red', back:'Volver', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Método', gateway:'Puerta de enlace', staticbtn:'Estática', ipfield:'Dirección IP', mask:'Máscara (prefijo)', gwfield:'Puerta de enlace', apply:'Aplicar', scan:'Escanear redes', disconnect:'Desconectar', up:'Conectado', down:'Desconectado', unavailable:'No disponible', applying:'Aplicando...', success:'Configuración aplicada.', error:'Error.', scanning:'Escaneando...', noscan:'No se encontraron redes.', dhcp:'DHCP', static:'Estática' },
-  eu: { title:'Sare Konfigurazioa', back:'Itzuli', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Metodoa', gateway:'Atebidea', staticbtn:'Estatikoa', ipfield:'IP helbidea', mask:'Maskara (aurrizkia)', gwfield:'Atebidea', apply:'Aplikatu', scan:'Sareak eskaneatu', disconnect:'Deskonektatu', up:'Konektatuta', down:'Deskonektatuta', unavailable:'Erabilezina', applying:'Aplikatzen...', success:'Konfigurazioa aplikatuta.', error:'Errorea.', scanning:'Eskaneatzen...', noscan:'Ez da sarerik aurkitu.', dhcp:'DHCP', static:'Estatikoa' }
+  fr: { title:'Configuration Réseau', screen:'Affichage', mirror:'Miroir', extend:'Étendu', mirror_ok:'Mode miroir activé.', extend_ok:'Mode étendu activé.', screen_error:'Erreur affichage.', back:'Retour', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Méthode', gateway:'Passerelle', staticbtn:'Statique', ipfield:'Adresse IP', mask:'Masque (préfixe)', gwfield:'Passerelle', apply:'Appliquer', scan:'Scanner les réseaux', disconnect:'Se déconnecter', up:'Connecté', down:'Déconnecté', unavailable:'Non disponible', applying:'Application...', success:'Configuration appliquée.', error:'Erreur.', scanning:'Scan en cours...', noscan:'Aucun réseau trouvé.', dhcp:'DHCP', static:'Statique', hidden:'Réseau masqué', hssid:'Nom du réseau (SSID)', hsec:'Sécurité', wpa:'WPA/WPA2 Personnel', open:'Aucune (réseau ouvert)', hpass:'Mot de passe', hiface:'Carte Wi-Fi', auto:'Automatique', usb:'USB', hconnect:'Se connecter', hcancel:'Annuler', connecting:'Connexion à', connected:'Connecté à', connerr:'Erreur de connexion', badssid:'Indiquez le nom du réseau (1 à 32 caractères).', badpass:'Le mot de passe doit contenir 8 à 63 caractères.', pwdfor:'Mot de passe pour', disconnecting:'Déconnexion...', disconnected:'Déconnecté' },
+  en: { title:'Network Settings', screen:'Display', mirror:'Mirror', extend:'Extended', mirror_ok:'Mirror mode enabled.', extend_ok:'Extended mode enabled.', screen_error:'Display error.', back:'Back', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Method', gateway:'Gateway', staticbtn:'Static', ipfield:'IP Address', mask:'Mask (prefix)', gwfield:'Gateway', apply:'Apply', scan:'Scan networks', disconnect:'Disconnect', up:'Connected', down:'Disconnected', unavailable:'Unavailable', applying:'Applying...', success:'Configuration applied.', error:'Error.', scanning:'Scanning...', noscan:'No networks found.', dhcp:'DHCP', static:'Static', hidden:'Hidden network', hssid:'Network name (SSID)', hsec:'Security', wpa:'WPA/WPA2 Personal', open:'None (open network)', hpass:'Password', hiface:'Wi-Fi adapter', auto:'Automatic', usb:'USB', hconnect:'Connect', hcancel:'Cancel', connecting:'Connecting to', connected:'Connected to', connerr:'Connection error', badssid:'Enter the network name (1 to 32 characters).', badpass:'The password must be 8 to 63 characters.', pwdfor:'Password for', disconnecting:'Disconnecting...', disconnected:'Disconnected' },
+  es: { title:'Configuración de Red', screen:'Pantalla', mirror:'Espejo', extend:'Extendido', mirror_ok:'Modo espejo activado.', extend_ok:'Modo extendido activado.', screen_error:'Error de pantalla.', back:'Volver', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Método', gateway:'Puerta de enlace', staticbtn:'Estática', ipfield:'Dirección IP', mask:'Máscara (prefijo)', gwfield:'Puerta de enlace', apply:'Aplicar', scan:'Escanear redes', disconnect:'Desconectar', up:'Conectado', down:'Desconectado', unavailable:'No disponible', applying:'Aplicando...', success:'Configuración aplicada.', error:'Error.', scanning:'Escaneando...', noscan:'No se encontraron redes.', dhcp:'DHCP', static:'Estática', hidden:'Red oculta', hssid:'Nombre de la red (SSID)', hsec:'Seguridad', wpa:'WPA/WPA2 Personal', open:'Ninguna (red abierta)', hpass:'Contraseña', hiface:'Tarjeta Wi-Fi', auto:'Automática', usb:'USB', hconnect:'Conectar', hcancel:'Cancelar', connecting:'Conectando a', connected:'Conectado a', connerr:'Error de conexión', badssid:'Indique el nombre de la red (1 a 32 caracteres).', badpass:'La contraseña debe tener entre 8 y 63 caracteres.', pwdfor:'Contraseña para', disconnecting:'Desconectando...', disconnected:'Desconectado' },
+  eu: { title:'Sare Konfigurazioa', screen:'Pantaila', mirror:'Ispilua', extend:'Zabaldua', mirror_ok:'Ispilu modua aktibatuta.', extend_ok:'Zabaldu modua aktibatuta.', screen_error:'Pantaila errorea.', back:'Itzuli', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Metodoa', gateway:'Atebidea', staticbtn:'Estatikoa', ipfield:'IP helbidea', mask:'Maskara (aurrizkia)', gwfield:'Atebidea', apply:'Aplikatu', scan:'Sareak eskaneatu', disconnect:'Deskonektatu', up:'Konektatuta', down:'Deskonektatuta', unavailable:'Erabilezina', applying:'Aplikatzen...', success:'Konfigurazioa aplikatuta.', error:'Errorea.', scanning:'Eskaneatzen...', noscan:'Ez da sarerik aurkitu.', dhcp:'DHCP', static:'Estatikoa', hidden:'Sare ezkutua', hssid:'Sarearen izena (SSID)', hsec:'Segurtasuna', wpa:'WPA/WPA2 Pertsonala', open:'Bat ere ez (sare irekia)', hpass:'Pasahitza', hiface:'Wi-Fi txartela', auto:'Automatikoa', usb:'USB', hconnect:'Konektatu', hcancel:'Utzi', connecting:'Konektatzen:', connected:'Konektatuta:', connerr:'Konexio errorea', badssid:'Idatzi sarearen izena (1etik 32 karakterera).', badpass:'Pasahitzak 8 eta 63 karaktere artean izan behar ditu.', pwdfor:'Pasahitza:', disconnecting:'Deskonektatzen...', disconnected:'Deskonektatuta' }
 };
 
 let lang = 'fr';
@@ -229,6 +262,19 @@ function setLang(l) {
   document.getElementById('lbl-apply').textContent = t.apply;
   document.getElementById('lbl-scan').textContent = t.scan;
   document.getElementById('lbl-disconnect').textContent = t.disconnect;
+  if(document.getElementById('lbl-screen')) document.getElementById('lbl-screen').textContent = t.screen || 'Affichage';
+  if(document.getElementById('lbl-mirror')) document.getElementById('lbl-mirror').textContent = t.mirror || 'Miroir';
+  if(document.getElementById('lbl-extend')) document.getElementById('lbl-extend').textContent = t.extend || 'Étendu';
+  document.getElementById('lbl-hidden').textContent = t.hidden;
+  document.getElementById('lbl-hssid').textContent = t.hssid;
+  document.getElementById('lbl-hsec').textContent = t.hsec;
+  document.getElementById('opt-wpa').textContent = t.wpa;
+  document.getElementById('opt-open').textContent = t.open;
+  document.getElementById('lbl-hpass').textContent = t.hpass;
+  document.getElementById('lbl-hiface').textContent = t.hiface;
+  document.getElementById('opt-auto').textContent = t.auto;
+  document.getElementById('lbl-hconnect').textContent = t.hconnect;
+  document.getElementById('lbl-hcancel').textContent = t.hcancel;
   document.getElementById('btn-dhcp').textContent = t.dhcp;
   document.getElementById('eth-method').textContent = currentMethod === 'dhcp' ? t.dhcp : t.static;
 }
@@ -329,7 +375,15 @@ function scanWifi() {
         const div = document.createElement('div');
         div.className = 'wifi-item';
         const bars = n.quality > 66 ? '▂▄▆█' : n.quality > 33 ? '▂▄▆_' : '▂▄__';
-        div.innerHTML = '<span class="wifi-ssid">' + n.ssid + '</span><span class="wifi-signal">' + bars + ' ' + n.quality + '%</span>';
+        // textContent : un nom de reseau ne peut pas injecter de HTML dans la page
+        const sName = document.createElement('span');
+        sName.className = 'wifi-ssid';
+        sName.textContent = n.ssid;
+        const sSig = document.createElement('span');
+        sSig.className = 'wifi-signal';
+        sSig.textContent = bars + ' ' + n.quality + '%';
+        div.appendChild(sName);
+        div.appendChild(sSig);
         div.onclick = () => connectWifi(n.ssid, n.encryption);
         list.appendChild(div);
       });
@@ -341,14 +395,15 @@ function scanWifi() {
 }
 
 function connectWifi(ssid, enc) {
+  const t = i18n[lang] || i18n.fr;
   const msg = document.getElementById('wifi-msg');
   let password = '';
   if (enc !== 'Open') {
-    password = prompt('Mot de passe pour ' + ssid + ':');
+    password = prompt(t.pwdfor + ' ' + ssid + ':');
     if (password === null) return;
   }
   msg.className = 'msg info';
-  msg.textContent = 'Connexion à ' + ssid + '...';
+  msg.textContent = t.connecting + ' ' + ssid + '...';
   fetch('http://127.0.0.1:7070/wifi-connect', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -357,22 +412,113 @@ function connectWifi(ssid, enc) {
   .then(r => r.text())
   .then(res => {
     msg.className = res.includes('ok') ? 'msg success' : 'msg error';
-    msg.textContent = res.includes('ok') ? 'Connecté à ' + ssid : 'Erreur de connexion';
+    msg.textContent = res.includes('ok') ? t.connected + ' ' + ssid : t.connerr;
     if (res.includes('ok')) setTimeout(loadStatus, 3000);
   })
-  .catch(() => { msg.className = 'msg error'; msg.textContent = 'Erreur'; });
+  .catch(() => { msg.className = 'msg error'; msg.textContent = t.error; });
+}
+
+// ── RESEAU MASQUE (saisie manuelle du SSID) ──────────────────────────────────
+function toggleHidden(force) {
+  const form = document.getElementById('hidden-form');
+  const show = (typeof force === 'boolean') ? force : !form.classList.contains('show');
+  form.classList.toggle('show', show);
+  if (show) {
+    loadWifiDevices();
+    document.getElementById('inp-hssid').focus();
+  } else {
+    document.getElementById('inp-hpass').value = '';
+  }
+}
+
+function onSecChange() {
+  const open = document.getElementById('sel-hsec').value === 'open';
+  document.getElementById('grp-hpass').style.display = open ? 'none' : 'block';
+}
+
+function loadWifiDevices() {
+  const t = i18n[lang] || i18n.fr;
+  const sel = document.getElementById('sel-hiface');
+  fetch('http://127.0.0.1:7070/wifi-devices')
+    .then(r => r.json())
+    .then(devs => {
+      while (sel.options.length > 1) sel.remove(1);
+      devs.forEach(d => {
+        const o = document.createElement('option');
+        o.value = d.device;
+        o.textContent = d.device + (d.usb ? ' (' + t.usb + ')' : '');
+        sel.appendChild(o);
+      });
+    })
+    .catch(() => {});
+}
+
+function connectHidden() {
+  const t = i18n[lang] || i18n.fr;
+  const msg = document.getElementById('wifi-msg');
+  const btn = document.getElementById('btn-hconnect');
+  const ssid = document.getElementById('inp-hssid').value.trim();
+  const security = document.getElementById('sel-hsec').value;
+  const password = document.getElementById('inp-hpass').value;
+  const iface = document.getElementById('sel-hiface').value;
+  if (!ssid || new TextEncoder().encode(ssid).length > 32) {
+    msg.className = 'msg error'; msg.textContent = t.badssid; return;
+  }
+  if (security !== 'open' && (password.length < 8 || password.length > 63)) {
+    msg.className = 'msg error'; msg.textContent = t.badpass; return;
+  }
+  btn.disabled = true;
+  msg.className = 'msg info';
+  msg.textContent = t.connecting + ' ' + ssid + '...';
+  fetch('http://127.0.0.1:7070/wifi-connect', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({hidden: true, ssid: ssid, password: password, security: security, iface: iface})
+  })
+  .then(r => r.text())
+  .then(res => {
+    btn.disabled = false;
+    const ok = (res === 'ok');
+    msg.className = ok ? 'msg success' : 'msg error';
+    msg.textContent = ok ? t.connected + ' ' + ssid : t.connerr + (res.startsWith('error: ') ? ' : ' + res.slice(7) : '');
+    if (ok) {
+      toggleHidden(false);
+      setTimeout(loadStatus, 3000);
+    }
+  })
+  .catch(() => { btn.disabled = false; msg.className = 'msg error'; msg.textContent = t.connerr; });
 }
 
 function disconnectWifi() {
   const msg = document.getElementById('wifi-msg');
   msg.className = 'msg info';
-  msg.textContent = 'Déconnexion...';
+  const t = i18n[lang] || i18n.fr;
+  msg.textContent = t.disconnecting;
   fetch('http://127.0.0.1:7070/wifi-disconnect', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: '{}'
   })
-  .then(() => { msg.className = 'msg success'; msg.textContent = 'Déconnecté'; setTimeout(loadStatus, 2000); })
+  .then(() => { msg.className = 'msg success'; msg.textContent = t.disconnected; setTimeout(loadStatus, 2000); })
+  .catch(() => { msg.className = 'msg error'; msg.textContent = t.error; });
+}
+
+
+function setScreen(mode) {
+  const msg = document.getElementById('screen-msg');
+  msg.className = 'msg info';
+  msg.textContent = '...';
+  fetch('http://127.0.0.1:7070/screen-mode', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({mode: mode})
+  })
+  .then(r => r.text())
+  .then(res => {
+    const t = i18n[lang] || i18n.fr;
+    msg.className = res.includes('ok') ? 'msg success' : 'msg error';
+    msg.textContent = res.includes('ok') ? (mode === 'mirror' ? t.mirror_ok : t.extend_ok) : t.screen_error;
+  })
   .catch(() => { msg.className = 'msg error'; msg.textContent = 'Erreur'; });
 }
 
@@ -384,5 +530,14 @@ fetch('http://127.0.0.1:7070/settings')
 loadStatus();
 setInterval(loadStatus, 10000);
 </script>
+
+  <div class="card" id="screen-card">
+    <div class="card-title">🖥️ <span id="lbl-screen">Affichage</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-secondary" id="btn-mirror" onclick="setScreen('mirror')" style="flex:1"><span id="lbl-mirror">Miroir</span></button>
+      <button class="btn btn-secondary" id="btn-extend" onclick="setScreen('extend')" style="flex:1"><span id="lbl-extend">Étendu</span></button>
+    </div>
+    <div class="msg" id="screen-msg"></div>
+  </div>
 </body>
 </html>

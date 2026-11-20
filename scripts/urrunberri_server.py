@@ -17,6 +17,21 @@ import os
 import re
 
 SAVED_FILE = "/etc/urrunberri-os/saved_connections.csv"
+
+def _get_fernet():
+    try:
+        from cryptography.fernet import Fernet
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        import base64
+        with open("/etc/machine-id","r") as f:
+            machine_id = f.read().strip().encode()
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(),length=32,salt=b"urrunberri-os-v1",iterations=100000)
+        key = base64.urlsafe_b64encode(kdf.derive(machine_id))
+        return Fernet(key)
+    except Exception:
+        return None
+
 SETTINGS_FILE = "/etc/urrunberri-os/settings.json"
 SPLASH_DIR = "/opt/urrunberri-os/splash"
 VERSION_FILE = "/etc/urrunberri-os/version"
@@ -30,6 +45,22 @@ PORT = 7070
 DANGEROUS_CHARS = re.compile(r'[|;&$`\\(){}<>\n\r\x00\'"!#~]')
 MAX_FIELD_LENGTH = 255
 MAX_PASSWORD_LENGTH = 512
+
+def encrypt_password(password):
+    if not password: return ""
+    try:
+        f = _get_fernet()
+        if f: return "ENC:" + f.encrypt(password.encode()).decode()
+    except Exception: pass
+    return password
+
+def decrypt_password(password):
+    if not password or not password.startswith("ENC:"): return password
+    try:
+        f = _get_fernet()
+        if f: return f.decrypt(password[4:].encode()).decode()
+    except Exception: pass
+    return ""
 
 def sanitize(value, max_len=MAX_FIELD_LENGTH):
     """Remove dangerous characters and limit length."""
@@ -69,7 +100,7 @@ def sanitize_port(port):
 def sanitize_protocol(proto):
     """Only allow known protocols."""
     proto = str(proto).strip().lower()
-    if proto in ('rdp', 'vnc', 'ssh', 'rdpgw'):
+    if proto in ('rdp', 'vnc', 'ssh', 'rdpgw', 'web'):
         return proto
     return 'rdp'
 
@@ -105,7 +136,8 @@ def sanitize_connect_data(raw_data):
     multimon   = sanitize_flag(parts[8])
     usb        = sanitize_flag(parts[9])
 
-    if not host or not user:
+    # Web : pas d'utilisateur necessaire (adresse + port suffisent)
+    if not host or (not user and protocol != 'web'):
         return None
 
     gw_host = sanitize_host(parts[10]) if parts[10] else ""
@@ -154,10 +186,10 @@ def load_connections():
                         'protocol':   parts[5] or 'rdp',
                         'resolution': parts[6] or '1920x1080',
                         'multimon':   parts[7] or '0',
-                        'password':   parts[8],
+                        'password':   decrypt_password(parts[8]),
                         'gw_host':    parts[9],
                         'gw_user':    parts[10],
-                        'gw_pass':    parts[11]
+                        'gw_pass':    decrypt_password(parts[11])
                     })
     except:
         pass
@@ -173,12 +205,12 @@ def save_connection(host, port, user, domain='', name='', protocol='rdp', resolu
     protocol   = sanitize_protocol(protocol)
     resolution = sanitize_resolution(resolution)
     multimon   = sanitize_flag(multimon)
-    password   = sanitize_password(password)
+    password   = encrypt_password(sanitize_password(password))
     gw_host    = sanitize_host(gw_host) if gw_host else ''
     gw_user    = sanitize(gw_user)
-    gw_pass    = sanitize_password(gw_pass)
+    gw_pass    = encrypt_password(sanitize_password(gw_pass))
 
-    if not host or not user:
+    if not host or (not user and protocol != 'web'):
         return load_connections()
     conns = [c for c in load_connections()
              if not (c['host'] == host and c['port'] == port and c['user'] == user)]
@@ -319,9 +351,15 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
             return
 
         if path == '/wifi-connect':
+            # Reseau masque : {"hidden": true, "ssid", "password", "security": "wpa-psk"|"open", "iface": ""}
             ssid = data.get('ssid', '')
             password = data.get('password', '')
-            import subprocess
+            if data.get('hidden') in (True, 'true', '1', 1):
+                ok, msg = connect_hidden_wifi(ssid, password,
+                                              data.get('security', 'wpa-psk'),
+                                              data.get('iface', ''))
+                self.send_cors('ok' if ok else 'error: ' + msg)
+                return
             try:
                 if password:
                     r = subprocess.run(['nmcli', 'device', 'wifi', 'connect', ssid, 'password', password, 'ifname', (wifi_iface() or 'wlp1s0')], capture_output=True, text=True, timeout=30)
@@ -331,8 +369,64 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
             except Exception as e:
                 self.send_cors('error: ' + str(e))
             return
+        if path == '/screens':
+            self.send_json(list_screens())
+            return
+
+        if path == '/screen-res':
+            try:
+                output = data.get('output', '')
+                resolution = data.get('resolution', '')
+                names = [s['name'] for s in list_screens()]
+                if output not in names or not re.fullmatch(r'\d{3,5}x\d{3,5}', str(resolution)):
+                    self.send_cors('error: ecran ou resolution invalide')
+                    return
+                r = subprocess.run(['xrandr', '--output', output, '--mode', resolution],
+                                   env=XENV, capture_output=True, text=True, timeout=15)
+                self.send_cors('ok' if r.returncode == 0 else 'error: ' + r.stderr.strip())
+            except Exception as e:
+                self.send_cors('error: '+str(e))
+            return
+
+        if path == '/screen-toggle':
+            try:
+                output = data.get('output', '')
+                action = data.get('action', 'on')
+                names = [s['name'] for s in list_screens()]
+                if output not in names:
+                    self.send_cors('error: ecran invalide')
+                    return
+                arg = '--off' if action == 'off' else '--auto'
+                r = subprocess.run(['xrandr', '--output', output, arg],
+                                   env=XENV, capture_output=True, text=True, timeout=15)
+                self.send_cors('ok' if r.returncode == 0 else 'error: ' + r.stderr.strip())
+            except Exception as e:
+                self.send_cors('error: '+str(e))
+            return
+
+        if path == '/screen-mode':
+            try:
+                mode = data.get('mode', 'extend')
+                import subprocess as _sp
+                env = XENV
+                out = _sp.check_output(['xrandr','--query'], env=env, text=True, stderr=_sp.STDOUT)
+                import re as _re
+                outputs = _re.findall(r'^(\S+) connected', out, _re.MULTILINE)
+                primary = outputs[0] if outputs else None
+                secondary = outputs[1] if len(outputs) > 1 else None
+                if primary and secondary:
+                    if mode == 'mirror':
+                        _sp.run(['xrandr','--output',primary,'--auto','--pos','0x0','--output',secondary,'--same-as',primary,'--auto'], env=env)
+                    else:
+                        _sp.run(['xrandr','--output',secondary,'--auto','--right-of',primary], env=env)
+                    self.send_cors('ok')
+                else:
+                    self.send_cors('no secondary display')
+            except Exception as e:
+                self.send_cors('error: ' + str(e))
+            return
+
         if path == '/wifi-disconnect':
-            import subprocess
             try:
                 subprocess.run(['nmcli', 'device', 'disconnect', (wifi_iface() or 'wlp1s0')], capture_output=True, text=True)
                 self.send_cors('ok')
@@ -443,7 +537,32 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
                 self.send_cors('error: invalid input')
             return
 
-        if path == '/splash/network.html':
+        if path == '/screens':
+            # affichage.html lit la liste des ecrans en GET
+            self.send_json(list_screens())
+            return
+
+        if path == '/wifi-devices':
+            self.send_json(wifi_devices())
+            return
+
+        if path in ('/splash/parametres.html', '/splash/network.html', '/splash/affichage.html'):
+            # Chaque page sert son propre fichier (affichage.html servait network.html par erreur)
+            fname = os.path.basename(path)
+            try:
+                with open(f'{SPLASH_DIR}/{fname}', 'r') as f:
+                    html = f.read()
+                encoded = html.encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(encoded)))
+                self.end_headers()
+                self.wfile.write(encoded)
+            except:
+                self.send_response(404); self.end_headers()
+            return
+
+        if path == '/splash/network.html_old':
             try:
                 with open('/opt/urrunberri-os/splash/network.html', 'rb') as f:
                     data = f.read()
@@ -462,7 +581,6 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
             return
         if path == '/wifi-scan':
             self.send_json(scan_wifi())
-            return
             return
         self.send_cors('ok')
 
@@ -600,6 +718,121 @@ def scan_wifi():
         return nets
     except Exception:
         return []
+
+# ── AFFICHAGE (xrandr) ───────────────────────────────────────────────────────
+
+XENV = {'DISPLAY': ':0', 'XAUTHORITY': '/var/run/lightdm/root/:0',
+        'HOME': '/root', 'PATH': '/usr/bin:/bin'}
+
+def list_screens():
+    """Ecrans detectes par xrandr : nom, branche, resolution actuelle, modes."""
+    try:
+        out = subprocess.check_output(['xrandr', '--query'], env=XENV, text=True,
+                                      stderr=subprocess.STDOUT, timeout=15)
+    except Exception:
+        return []
+    screens = []
+    for line in out.splitlines():
+        m = re.match(r'^(\S+) (connected|disconnected)(.*)', line)
+        if m:
+            res_m = re.search(r'(\d+x\d+)\+', m.group(3))
+            screens.append({'name': m.group(1),
+                            'connected': m.group(2) == 'connected',
+                            'current': res_m.group(1) if res_m else None,
+                            'active': res_m is not None,
+                            'modes': []})
+        elif screens and line.startswith('   '):
+            res = re.search(r'(\d+x\d+)', line)
+            if res and res.group(1) not in screens[-1]['modes']:
+                screens[-1]['modes'].append(res.group(1))
+    # Seuls les ecrans branches sont utiles dans la page Affichage
+    return [s for s in screens if s['connected']]
+
+# ── RESEAU WI-FI MASQUE (saisie manuelle du SSID) ────────────────────────────
+
+def wifi_devices():
+    """Liste des cartes Wi-Fi (hors p2p) avec leur etat."""
+    try:
+        out = subprocess.check_output(['nmcli', '-t', '-f', 'DEVICE,TYPE,STATE', 'dev', 'status'],
+                                      text=True, timeout=10)
+    except Exception:
+        return []
+    devs = []
+    for line in out.splitlines():
+        parts = line.split(':')
+        if len(parts) >= 3 and parts[1] == 'wifi' and not parts[0].startswith('p2p'):
+            devs.append({'device': parts[0], 'state': parts[2],
+                         'usb': parts[0].startswith('wlx')})
+    return devs
+
+def sanitize_ssid(value):
+    """SSID : 1 a 32 octets, sans caractere de controle, sans tiret initial."""
+    if not isinstance(value, str):
+        return ''
+    value = value.strip()
+    if not value or len(value.encode('utf-8')) > 32:
+        return ''
+    if re.search(r'[\x00-\x1f\x7f]', value) or value.startswith('-'):
+        return ''
+    return value
+
+def sanitize_psk(value):
+    """Cle WPA : 8 a 63 caracteres imprimables (ou 64 hexadecimaux)."""
+    if not isinstance(value, str):
+        return ''
+    if re.fullmatch(r'[0-9a-fA-F]{64}', value):
+        return value
+    if 8 <= len(value) <= 63 and not re.search(r'[\x00-\x1f\x7f]', value):
+        return value
+    return ''
+
+def connect_hidden_wifi(ssid, password, security='wpa-psk', iface=''):
+    """Cree un profil NetworkManager pour un reseau masque puis l'active.
+    Equivalent de :
+      nmcli con add type wifi ifname <carte> con-name <ssid> ssid <ssid>
+            802-11-wireless.hidden yes wifi-sec.key-mgmt wpa-psk wifi-sec.psk <cle>
+            connection.autoconnect yes
+      nmcli con up <ssid>
+    Arguments passes en liste (pas de shell)."""
+    ssid = sanitize_ssid(ssid)
+    if not ssid:
+        return False, 'SSID invalide (1 a 32 caracteres)'
+    security = security if security in ('wpa-psk', 'open') else 'wpa-psk'
+    if security == 'wpa-psk':
+        password = sanitize_psk(password)
+        if not password:
+            return False, 'mot de passe invalide (8 a 63 caracteres)'
+    valid = [d['device'] for d in wifi_devices()]
+    if iface and iface not in valid:
+        return False, 'carte Wi-Fi inconnue'
+    con_name = ssid
+    try:
+        # Supprimer un ancien profil du meme nom (aucune erreur si absent)
+        subprocess.run(['nmcli', 'con', 'delete', 'id', con_name],
+                       capture_output=True, text=True, timeout=15)
+        cmd = ['nmcli', 'con', 'add', 'type', 'wifi',
+               'con-name', con_name, 'ssid', ssid,
+               '802-11-wireless.hidden', 'yes',
+               'connection.autoconnect', 'yes']
+        if iface:
+            cmd += ['ifname', iface]
+        if security == 'wpa-psk':
+            cmd += ['wifi-sec.key-mgmt', 'wpa-psk', 'wifi-sec.psk', password]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        if r.returncode != 0:
+            return False, r.stderr.strip() or 'creation du profil impossible'
+        up = ['nmcli', '--wait', '45', 'con', 'up', 'id', con_name]
+        if iface:
+            up += ['ifname', iface]
+        r = subprocess.run(up, capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            # Echec (cle fausse, reseau hors de portee...) : ne pas garder un profil inutilisable
+            subprocess.run(['nmcli', 'con', 'delete', 'id', con_name],
+                           capture_output=True, text=True, timeout=15)
+            return False, r.stderr.strip() or 'connexion impossible'
+        return True, ''
+    except Exception as e:
+        return False, str(e)
 
 def run():
     os.makedirs('/etc/urrunberri-os', exist_ok=True)
