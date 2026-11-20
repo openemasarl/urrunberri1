@@ -42,10 +42,10 @@ select:focus{border-color:#2352be;background:#fff}
   <div class="logo-wrap"><img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS"></div>
   <button class="back-btn" onclick="window.location='http://127.0.0.1:7070/splash/parametres.html'">← <span id="lbl-back">Retour</span></button>
   <div class="langs">
-    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
-    <button class="lang-btn" onclick="setLang('es')">ES</button>
-    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+    <button class="lang-btn active" onclick="setLang('fr');saveLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en');saveLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es');saveLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu');saveLang('eu')">EU</button>
   </div>
   <h1 id="lbl-title">Affichage</h1>
   <div class="card">
@@ -85,6 +85,7 @@ select:focus{border-color:#2352be;background:#fff}
   </div>
 </div>
 <script>
+function saveLang(l){fetch('http://127.0.0.1:7070/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:l})}).catch(()=>{});}
 const i18n={
   fr:{sleep_title:'Mise en veille de l\'écran',sleep_0:'Toujours allumé',sleep_ok:'Réglage enregistré.',title:'Affichage',back:'Retour',mode:'Mode d\'affichage',mirror:'Miroir',extend:'Étendu',res_title:'Résolution',screen_sel:'Écran',res_sel:'Résolution',apply:'Appliquer',screens_title:'Écrans connectés',on:'Actif',off:'Inactif',mirror_ok:'Mode miroir activé.',extend_ok:'Mode étendu activé.',res_ok:'Résolution appliquée.',error:'Erreur.'},
   en:{sleep_title:'Screen sleep',sleep_0:'Always on',sleep_ok:'Setting saved.',title:'Display',back:'Back',mode:'Display mode',mirror:'Mirror',extend:'Extended',res_title:'Resolution',screen_sel:'Screen',res_sel:'Resolution',apply:'Apply',screens_title:'Connected screens',on:'On',off:'Off',mirror_ok:'Mirror mode enabled.',extend_ok:'Extended mode enabled.',res_ok:'Resolution applied.',error:'Error.'},

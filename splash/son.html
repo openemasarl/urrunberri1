@@ -41,10 +41,10 @@ select:focus{border-color:#2352be;background:#fff}
   <div class="logo-wrap"><img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS"></div>
   <button class="back-btn" onclick="window.location='http://127.0.0.1:7070/splash/parametres.html'">← <span id="lbl-back">Retour</span></button>
   <div class="langs">
-    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
-    <button class="lang-btn" onclick="setLang('es')">ES</button>
-    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+    <button class="lang-btn active" onclick="setLang('fr');saveLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en');saveLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es');saveLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu');saveLang('eu')">EU</button>
   </div>
   <h1 id="lbl-title">Son</h1>
   <div class="card">
@@ -69,6 +69,7 @@ select:focus{border-color:#2352be;background:#fff}
   </div>
 </div>
 <script>
+function saveLang(l){fetch('http://127.0.0.1:7070/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:l})}).catch(()=>{});}
 const i18n={
   fr:{title:'Son',back:'Retour',out_title:'Sortie audio',auto:'Automatique (casque USB, sinon jack)',active:'Sortie utilisée :',none:'Aucune sortie audio détectée.',vol_title:'Volume',mute:'Couper le son',unmute:'Rétablir le son',test:'Tester le son',testing:'Bip de test...',saved:'Réglage enregistré.',novol:'Le volume de cette sortie se règle sur l\'écran ou l\'appareil.',error:'Erreur.'},
   en:{title:'Sound',back:'Back',out_title:'Audio output',auto:'Automatic (USB headset, otherwise jack)',active:'Output in use:',none:'No audio output detected.',vol_title:'Volume',mute:'Mute',unmute:'Unmute',test:'Test sound',testing:'Test beep...',saved:'Setting saved.',novol:'The volume of this output is set on the screen or device.',error:'Error.'},

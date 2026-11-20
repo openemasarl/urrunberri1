@@ -128,10 +128,10 @@ input:focus { border-color: #2352be; background: #fff; }
   </div>
   <button class="back-btn" onclick="window.location='http://127.0.0.1:7070/splash/parametres.html'">← <span id="lbl-back">Retour</span></button>
   <div class="langs">
-    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
-    <button class="lang-btn" onclick="setLang('es')">ES</button>
-    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+    <button class="lang-btn active" onclick="setLang('fr');saveLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en');saveLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es');saveLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu');saveLang('eu')">EU</button>
   </div>
   <h1 id="lbl-title">Configuration Réseau</h1>
 
@@ -233,6 +233,7 @@ input:focus { border-color: #2352be; background: #fff; }
 </div>
 
 <script>
+function saveLang(l){fetch('http://127.0.0.1:7070/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:l})}).catch(()=>{});}
 const i18n = {
   fr: { title:'Configuration Réseau', screen:'Affichage', mirror:'Miroir', extend:'Étendu', mirror_ok:'Mode miroir activé.', extend_ok:'Mode étendu activé.', screen_error:'Erreur affichage.', back:'Retour', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Méthode', gateway:'Passerelle', staticbtn:'Statique', ipfield:'Adresse IP', mask:'Masque (préfixe)', gwfield:'Passerelle', apply:'Appliquer', scan:'Scanner les réseaux', disconnect:'Se déconnecter', up:'Connecté', down:'Déconnecté', unavailable:'Non disponible', applying:'Application...', success:'Configuration appliquée.', error:'Erreur.', scanning:'Scan en cours...', noscan:'Aucun réseau trouvé.', dhcp:'DHCP', static:'Statique', hidden:'Réseau masqué', hssid:'Nom du réseau (SSID)', hsec:'Sécurité', wpa:'WPA/WPA2 Personnel', open:'Aucune (réseau ouvert)', hpass:'Mot de passe', hiface:'Carte Wi-Fi', auto:'Automatique', usb:'USB', hconnect:'Se connecter', hcancel:'Annuler', connecting:'Connexion à', connected:'Connecté à', connerr:'Erreur de connexion', badssid:'Indiquez le nom du réseau (1 à 32 caractères).', badpass:'Le mot de passe doit contenir 8 à 63 caractères.', pwdfor:'Mot de passe pour', disconnecting:'Déconnexion...', disconnected:'Déconnecté' },
   en: { title:'Network Settings', screen:'Display', mirror:'Mirror', extend:'Extended', mirror_ok:'Mirror mode enabled.', extend_ok:'Extended mode enabled.', screen_error:'Display error.', back:'Back', ethernet:'Ethernet', wifi:'Wi-Fi', method:'Method', gateway:'Gateway', staticbtn:'Static', ipfield:'IP Address', mask:'Mask (prefix)', gwfield:'Gateway', apply:'Apply', scan:'Scan networks', disconnect:'Disconnect', up:'Connected', down:'Disconnected', unavailable:'Unavailable', applying:'Applying...', success:'Configuration applied.', error:'Error.', scanning:'Scanning...', noscan:'No networks found.', dhcp:'DHCP', static:'Static', hidden:'Hidden network', hssid:'Network name (SSID)', hsec:'Security', wpa:'WPA/WPA2 Personal', open:'None (open network)', hpass:'Password', hiface:'Wi-Fi adapter', auto:'Automatic', usb:'USB', hconnect:'Connect', hcancel:'Cancel', connecting:'Connecting to', connected:'Connected to', connerr:'Connection error', badssid:'Enter the network name (1 to 32 characters).', badpass:'The password must be 8 to 63 characters.', pwdfor:'Password for', disconnecting:'Disconnecting...', disconnected:'Disconnected' },

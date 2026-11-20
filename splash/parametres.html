@@ -29,10 +29,10 @@ h1{text-align:center;font-size:18px;font-weight:700;color:#2352be;margin-bottom:
   <div class="logo-wrap"><img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS"></div>
   <button class="back-btn" onclick="window.location='http://127.0.0.1:7070/splash/login.html'">← <span id="lbl-back">Retour</span></button>
   <div class="langs">
-    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
-    <button class="lang-btn" onclick="setLang('es')">ES</button>
-    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+    <button class="lang-btn active" onclick="setLang('fr');saveLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en');saveLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es');saveLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu');saveLang('eu')">EU</button>
   </div>
   <h1 id="lbl-title">Paramètres</h1>
   <div class="menu-card" onclick="window.location='http://127.0.0.1:7070/splash/network.html'">
@@ -61,6 +61,7 @@ h1{text-align:center;font-size:18px;font-weight:700;color:#2352be;margin-bottom:
   </div>
 </div>
 <script>
+function saveLang(l){fetch('http://127.0.0.1:7070/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:l})}).catch(()=>{});}
 const i18n = {
   fr:{sound:'Son',sound_desc:'Sortie, Volume, Casque USB',title:'Paramètres',back:'Retour',network:'Réseau',network_desc:'Ethernet, Wi-Fi',display:'Affichage',display_desc:'Résolution, Miroir, Écrans'},
   en:{sound:'Sound',sound_desc:'Output, Volume, USB headset',title:'Settings',back:'Back',network:'Network',network_desc:'Ethernet, Wi-Fi',display:'Display',display_desc:'Resolution, Mirror, Screens'},
