@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>UrrunBerri OS — Son</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#eef2f7;color:#1a2744;min-height:100vh;padding:20px 16px}
+.page-wrap{max-width:520px;margin:0 auto}
+.logo-wrap{text-align:center;margin-bottom:14px}
+.logo-wrap img{height:38px}
+.back-btn{display:flex;align-items:center;gap:6px;color:#2352be;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0}
+.langs{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.lang-btn{background:none;border:1px solid #c5d0e8;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;color:#5a6a8a;cursor:pointer;font-family:'DM Sans',sans-serif}
+.lang-btn.active{background:rgba(35,82,190,0.12);color:#2352be;border-color:#2352be}
+h1{text-align:center;font-size:18px;font-weight:700;color:#2352be;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 2px 12px rgba(35,82,190,0.07)}
+.card-title{font-size:13px;font-weight:700;color:#2352be;margin-bottom:12px}
+.btn-row{display:flex;gap:8px;margin-bottom:8px}
+.btn{flex:1;padding:10px;border:none;border-radius:10px;background:#2352be;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn:hover{background:#1a3fa0}
+.btn-secondary{background:#f0f4fb;color:#2352be;border:1.5px solid #c5d0e8}
+.btn-secondary:hover{background:rgba(35,82,190,0.12)}
+.msg{padding:8px 12px;border-radius:8px;font-size:12px;font-weight:500;margin-top:8px;display:none}
+.msg.success{background:#e6f4ea;color:#1a7f37;display:block}
+.msg.error{background:#fdecea;color:#c0392b;display:block}
+.msg.info{background:rgba(35,82,190,0.08);color:#2352be;display:block}
+.form-group{margin-bottom:10px}
+label{display:block;font-size:11px;font-weight:600;color:#5a6a8a;margin-bottom:3px}
+select{width:100%;padding:8px 10px;border:1.5px solid #c5d0e8;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:#1a2744;background:#f0f4fb;outline:none}
+select:focus{border-color:#2352be;background:#fff}
+.vol-row{display:flex;align-items:center;gap:12px}
+.vol-row input[type=range]{flex:1;accent-color:#2352be;height:28px}
+.vol-value{font-size:14px;font-weight:700;color:#2352be;min-width:44px;text-align:right}
+.hint{font-size:11px;color:#5a6a8a;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="logo-wrap"><img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS"></div>
+  <button class="back-btn" onclick="window.location='http://127.0.0.1:7070/splash/parametres.html'">← <span id="lbl-back">Retour</span></button>
+  <div class="langs">
+    <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('eu')">EU</button>
+  </div>
+  <h1 id="lbl-title">Son</h1>
+  <div class="card">
+    <div class="card-title" id="lbl-out-title">Sortie audio</div>
+    <div class="form-group">
+      <select id="out-select" onchange="applySound()"></select>
+    </div>
+    <div class="hint" id="out-active"></div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="lbl-vol-title">Volume</div>
+    <div class="vol-row">
+      <input type="range" id="vol" min="0" max="100" step="5" value="80" oninput="showVol()" onchange="applySound()">
+      <span class="vol-value" id="vol-value">80 %</span>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-secondary" id="btn-mute" onclick="toggleMute()"><span id="lbl-mute">Couper le son</span></button>
+      <button class="btn" onclick="testSound()"><span id="lbl-test">Tester le son</span></button>
+    </div>
+    <div class="hint" id="vol-hint"></div>
+    <div class="msg" id="sound-msg"></div>
+  </div>
+</div>
+<script>
+const i18n={
+  fr:{title:'Son',back:'Retour',out_title:'Sortie audio',auto:'Automatique (casque USB, sinon jack)',active:'Sortie utilisée :',none:'Aucune sortie audio détectée.',vol_title:'Volume',mute:'Couper le son',unmute:'Rétablir le son',test:'Tester le son',testing:'Bip de test...',saved:'Réglage enregistré.',novol:'Le volume de cette sortie se règle sur l\'écran ou l\'appareil.',error:'Erreur.'},
+  en:{title:'Sound',back:'Back',out_title:'Audio output',auto:'Automatic (USB headset, otherwise jack)',active:'Output in use:',none:'No audio output detected.',vol_title:'Volume',mute:'Mute',unmute:'Unmute',test:'Test sound',testing:'Test beep...',saved:'Setting saved.',novol:'The volume of this output is set on the screen or device.',error:'Error.'},
+  es:{title:'Sonido',back:'Volver',out_title:'Salida de audio',auto:'Automática (auriculares USB, si no jack)',active:'Salida en uso:',none:'No se ha detectado ninguna salida de audio.',vol_title:'Volumen',mute:'Silenciar',unmute:'Activar sonido',test:'Probar el sonido',testing:'Pitido de prueba...',saved:'Ajuste guardado.',novol:'El volumen de esta salida se ajusta en la pantalla o el dispositivo.',error:'Error.'},
+  eu:{title:'Soinua',back:'Itzuli',out_title:'Audio irteera',auto:'Automatikoa (USB entzungailuak, bestela jack)',active:'Erabilitako irteera:',none:'Ez da audio irteerarik detektatu.',vol_title:'Bolumena',mute:'Isilarazi',unmute:'Soinua berrezarri',test:'Soinua probatu',testing:'Proba soinua...',saved:'Ezarpena gordeta.',novol:'Irteera honen bolumena pantailan edo gailuan doitzen da.',error:'Errorea.'}
+};
+let lang='fr';
+let state={outputs:[],selected:'auto',active:null,has_volume:true,volume:80,mute:false};
+function t(){return i18n[lang]||i18n.fr;}
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick').includes("'"+l+"'")));
+  document.getElementById('lbl-title').textContent=t().title;
+  document.getElementById('lbl-back').textContent=t().back;
+  document.getElementById('lbl-out-title').textContent=t().out_title;
+  document.getElementById('lbl-vol-title').textContent=t().vol_title;
+  document.getElementById('lbl-test').textContent=t().test;
+  render();
+}
+function render(){
+  const sel=document.getElementById('out-select');
+  sel.innerHTML='';
+  const auto=document.createElement('option');
+  auto.value='auto';auto.textContent=t().auto;sel.appendChild(auto);
+  state.outputs.forEach(o=>{
+    const opt=document.createElement('option');
+    opt.value=o.id;opt.textContent=o.label;sel.appendChild(opt);
+  });
+  sel.value=state.selected;
+  const act=state.outputs.find(o=>o.id===state.active);
+  document.getElementById('out-active').textContent=state.outputs.length?(act?t().active+' '+act.label:''):t().none;
+  document.getElementById('vol').value=state.volume;
+  document.getElementById('vol').disabled=!state.has_volume;
+  document.getElementById('btn-mute').disabled=!state.has_volume;
+  document.getElementById('vol-hint').textContent=state.has_volume?'':t().novol;
+  document.getElementById('lbl-mute').textContent=state.mute?t().unmute:t().mute;
+  showVol();
+}
+function showVol(){document.getElementById('vol-value').textContent=document.getElementById('vol').value+' %';}
+function applySound(){
+  const msg=document.getElementById('sound-msg');
+  const body={output:document.getElementById('out-select').value,volume:parseInt(document.getElementById('vol').value),mute:state.mute};
+  fetch('http://127.0.0.1:7070/sound-apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+  .then(r=>r.json()).then(res=>{
+    if(res.ok){state=res;render();msg.className='msg success';msg.textContent=t().saved;}
+    else{msg.className='msg error';msg.textContent=t().error;}
+  }).catch(()=>{msg.className='msg error';msg.textContent=t().error;});
+}
+function toggleMute(){state.mute=!state.mute;applySound();}
+function testSound(){
+  const msg=document.getElementById('sound-msg');
+  msg.className='msg info';msg.textContent=t().testing;
+  fetch('http://127.0.0.1:7070/sound-test',{method:'POST'}).catch(()=>{msg.className='msg error';msg.textContent=t().error;});
+}
+function loadSound(){
+  fetch('http://127.0.0.1:7070/sound').then(r=>r.json()).then(s=>{state=s;render();}).catch(()=>{});
+}
+fetch('http://127.0.0.1:7070/settings').then(r=>r.json()).then(s=>{if(s.lang)setLang(s.lang);}).catch(()=>{});
+loadSound();
+</script>
+</body>
+</html>

@@ -70,6 +70,15 @@ select:focus{border-color:#2352be;background:#fff}
     <div class="msg" id="res-msg"></div>
   </div>
   <div class="card">
+    <div class="card-title" id="lbl-sleep-title">Mise en veille de l'écran</div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="sleep-0" onclick="setSleep(0)"><span id="lbl-sleep-0">Toujours allumé</span></button>
+      <button class="btn btn-secondary" id="sleep-30" onclick="setSleep(30)">30 min</button>
+      <button class="btn btn-secondary" id="sleep-60" onclick="setSleep(60)">60 min</button>
+    </div>
+    <div class="msg" id="sleep-msg"></div>
+  </div>
+  <div class="card">
     <div class="card-title" id="lbl-screens-title">Écrans connectés</div>
     <div id="screens-list"></div>
     <div class="msg" id="screens-msg"></div>
@@ -77,10 +86,10 @@ select:focus{border-color:#2352be;background:#fff}
 </div>
 <script>
 const i18n={
-  fr:{title:'Affichage',back:'Retour',mode:'Mode d\'affichage',mirror:'Miroir',extend:'Étendu',res_title:'Résolution',screen_sel:'Écran',res_sel:'Résolution',apply:'Appliquer',screens_title:'Écrans connectés',on:'Actif',off:'Inactif',mirror_ok:'Mode miroir activé.',extend_ok:'Mode étendu activé.',res_ok:'Résolution appliquée.',error:'Erreur.'},
-  en:{title:'Display',back:'Back',mode:'Display mode',mirror:'Mirror',extend:'Extended',res_title:'Resolution',screen_sel:'Screen',res_sel:'Resolution',apply:'Apply',screens_title:'Connected screens',on:'On',off:'Off',mirror_ok:'Mirror mode enabled.',extend_ok:'Extended mode enabled.',res_ok:'Resolution applied.',error:'Error.'},
-  es:{title:'Pantalla',back:'Volver',mode:'Modo de pantalla',mirror:'Espejo',extend:'Extendido',res_title:'Resolución',screen_sel:'Pantalla',res_sel:'Resolución',apply:'Aplicar',screens_title:'Pantallas conectadas',on:'Activo',off:'Inactivo',mirror_ok:'Modo espejo activado.',extend_ok:'Modo extendido activado.',res_ok:'Resolución aplicada.',error:'Error.'},
-  eu:{title:'Pantaila',back:'Itzuli',mode:'Pantaila modua',mirror:'Ispilua',extend:'Zabaldua',res_title:'Bereizmena',screen_sel:'Pantaila',res_sel:'Bereizmena',apply:'Aplikatu',screens_title:'Konektatutako pantailak',on:'Aktibo',off:'Inaktibo',mirror_ok:'Ispilu modua aktibatuta.',extend_ok:'Zabaldu modua aktibatuta.',res_ok:'Bereizmena aplikatuta.',error:'Errorea.'}
+  fr:{sleep_title:'Mise en veille de l\'écran',sleep_0:'Toujours allumé',sleep_ok:'Réglage enregistré.',title:'Affichage',back:'Retour',mode:'Mode d\'affichage',mirror:'Miroir',extend:'Étendu',res_title:'Résolution',screen_sel:'Écran',res_sel:'Résolution',apply:'Appliquer',screens_title:'Écrans connectés',on:'Actif',off:'Inactif',mirror_ok:'Mode miroir activé.',extend_ok:'Mode étendu activé.',res_ok:'Résolution appliquée.',error:'Erreur.'},
+  en:{sleep_title:'Screen sleep',sleep_0:'Always on',sleep_ok:'Setting saved.',title:'Display',back:'Back',mode:'Display mode',mirror:'Mirror',extend:'Extended',res_title:'Resolution',screen_sel:'Screen',res_sel:'Resolution',apply:'Apply',screens_title:'Connected screens',on:'On',off:'Off',mirror_ok:'Mirror mode enabled.',extend_ok:'Extended mode enabled.',res_ok:'Resolution applied.',error:'Error.'},
+  es:{sleep_title:'Suspensión de la pantalla',sleep_0:'Siempre encendida',sleep_ok:'Ajuste guardado.',title:'Pantalla',back:'Volver',mode:'Modo de pantalla',mirror:'Espejo',extend:'Extendido',res_title:'Resolución',screen_sel:'Pantalla',res_sel:'Resolución',apply:'Aplicar',screens_title:'Pantallas conectadas',on:'Activo',off:'Inactivo',mirror_ok:'Modo espejo activado.',extend_ok:'Modo extendido activado.',res_ok:'Resolución aplicada.',error:'Error.'},
+  eu:{sleep_title:'Pantailaren lokartzea',sleep_0:'Beti piztuta',sleep_ok:'Ezarpena gordeta.',title:'Pantaila',back:'Itzuli',mode:'Pantaila modua',mirror:'Ispilua',extend:'Zabaldua',res_title:'Bereizmena',screen_sel:'Pantaila',res_sel:'Bereizmena',apply:'Aplikatu',screens_title:'Konektatutako pantailak',on:'Aktibo',off:'Inaktibo',mirror_ok:'Ispilu modua aktibatuta.',extend_ok:'Zabaldu modua aktibatuta.',res_ok:'Bereizmena aplikatuta.',error:'Errorea.'}
 };
 let lang='fr';
 let screensData=[];
@@ -97,6 +106,25 @@ function setLang(l){
   document.getElementById('lbl-res-sel').textContent=t.res_sel;
   document.getElementById('lbl-apply').textContent=t.apply;
   document.getElementById('lbl-screens-title').textContent=t.screens_title;
+  document.getElementById('lbl-sleep-title').textContent=t.sleep_title;
+  document.getElementById('lbl-sleep-0').textContent=t.sleep_0;
+}
+function showSleep(m){
+  [0,30,60].forEach(v=>{
+    const b=document.getElementById('sleep-'+v);
+    b.className=(v===m)?'btn':'btn btn-secondary';
+  });
+}
+function setSleep(m){
+  const msg=document.getElementById('sleep-msg');
+  const t=i18n[lang]||i18n.fr;
+  fetch('http://127.0.0.1:7070/screen-timeout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({minutes:m})})
+  .then(r=>r.text()).then(res=>{
+    const ok=res.includes('ok');
+    msg.className=ok?'msg success':'msg error';
+    msg.textContent=ok?t.sleep_ok:t.error;
+    if(ok)showSleep(m);
+  }).catch(()=>{msg.className='msg error';msg.textContent=t.error;});
 }
 function setScreen(mode){
   const msg=document.getElementById('mode-msg');
@@ -171,7 +199,7 @@ function renderScreensList(data){
     </div>`;
   });
 }
-fetch('http://127.0.0.1:7070/settings').then(r=>r.json()).then(s=>{if(s.lang)setLang(s.lang);}).catch(()=>{});
+fetch('http://127.0.0.1:7070/settings').then(r=>r.json()).then(s=>{if(s.lang)setLang(s.lang);showSleep(parseInt(s.screen_timeout||0));}).catch(()=>{showSleep(0);});
 loadScreens();
 </script>
 </body>

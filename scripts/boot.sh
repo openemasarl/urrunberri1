@@ -257,6 +257,7 @@ numlockx on 2>/dev/null || true
                 "/size:${RESOLUTION}" \
                 /cert:ignore \
                 /clipboard /fonts "/kbd:layout:${KBD_LAYOUT}" \
+                /sound:sys:alsa \
                 ${MULTIMON_ARG} \
                 ${USB_ARG} \
                 /log-level:ERROR &
@@ -276,6 +277,7 @@ numlockx on 2>/dev/null || true
                 "/size:${RESOLUTION}" \
                 /cert:ignore \
                 /clipboard /fonts "/kbd:layout:${KBD_LAYOUT}" \
+                /sound:sys:alsa \
                 "${GW_ARGS[@]}" \
                 ${MULTIMON_ARG} \
                 ${USB_ARG} \

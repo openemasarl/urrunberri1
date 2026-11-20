@@ -51,6 +51,7 @@ apt-get install -y \
     wpasupplicant \
     python3-cryptography \
     systemd-timesyncd \
+    alsa-utils \
     resolvconf
 info "Paquets installes"
 
@@ -171,6 +172,7 @@ curl -fsSL "$GITHUB_RAW/splash/login.html" -o "$INSTALL_DIR/splash/login.html"
 curl -fsSL "$GITHUB_RAW/splash/network.html" -o "$INSTALL_DIR/splash/network.html"
 curl -fsSL "$GITHUB_RAW/splash/parametres.html" -o "$INSTALL_DIR/splash/parametres.html"
 curl -fsSL "$GITHUB_RAW/splash/affichage.html" -o "$INSTALL_DIR/splash/affichage.html"
+curl -fsSL "$GITHUB_RAW/splash/son.html" -o "$INSTALL_DIR/splash/son.html"
 curl -fsSL "$GITHUB_RAW/client-ui/splash/logo.png" -o "$INSTALL_DIR/splash/logo.png" 2>/dev/null || true
 curl -fsSL "$GITHUB_RAW/client-ui/splash/urrunberri.png" -o "$INSTALL_DIR/splash/urrunberri.png" 2>/dev/null || true
 

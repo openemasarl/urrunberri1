@@ -60,6 +60,7 @@ apt-get remove --purge -y \
     xdg-desktop-portal \
     xdg-desktop-portal-gtk \
     at-spi2-core \
+    alsa-utils \
     2>/dev/null || true
 echo "   Paquets desinstalles."
 
@@ -76,6 +77,7 @@ rm -rf /opt/urrunberri-os
 mkdir -p /root/urrunberri-backup
 [ -f /etc/urrunberri-os/saved_connections.csv ] && cp /etc/urrunberri-os/saved_connections.csv /root/urrunberri-backup/saved_connections.csv && echo "   Connexions sauvegardees dans /root/urrunberri-backup/"
 rm -rf /etc/urrunberri-os
+rm -f /etc/asound.conf
 rm -f /tmp/urrunberri_action.txt
 rm -f /tmp/urrunberri_login.txt
 rm -f /tmp/usb-share 2>/dev/null

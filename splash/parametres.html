@@ -27,7 +27,7 @@ h1{text-align:center;font-size:18px;font-weight:700;color:#2352be;margin-bottom:
 <body>
 <div class="page-wrap">
   <div class="logo-wrap"><img src="http://127.0.0.1:7070/splash/urrunberri.png" alt="UrrunBerri OS"></div>
-  <button class="back-btn" onclick="window.history.back()">← <span id="lbl-back">Retour</span></button>
+  <button class="back-btn" onclick="window.location='http://127.0.0.1:7070/splash/login.html'">← <span id="lbl-back">Retour</span></button>
   <div class="langs">
     <button class="lang-btn active" onclick="setLang('fr')">FR</button>
     <button class="lang-btn" onclick="setLang('en')">EN</button>
@@ -51,13 +51,21 @@ h1{text-align:center;font-size:18px;font-weight:700;color:#2352be;margin-bottom:
     </div>
     <div class="menu-arrow">›</div>
   </div>
+  <div class="menu-card" onclick="window.location='http://127.0.0.1:7070/splash/son.html'">
+    <div class="menu-icon">🔊</div>
+    <div class="menu-info">
+      <div class="menu-title" id="lbl-sound">Son</div>
+      <div class="menu-desc" id="lbl-sound-desc">Sortie, Volume, Casque USB</div>
+    </div>
+    <div class="menu-arrow">›</div>
+  </div>
 </div>
 <script>
 const i18n = {
-  fr:{title:'Paramètres',back:'Retour',network:'Réseau',network_desc:'Ethernet, Wi-Fi',display:'Affichage',display_desc:'Résolution, Miroir, Écrans'},
-  en:{title:'Settings',back:'Back',network:'Network',network_desc:'Ethernet, Wi-Fi',display:'Display',display_desc:'Resolution, Mirror, Screens'},
-  es:{title:'Ajustes',back:'Volver',network:'Red',network_desc:'Ethernet, Wi-Fi',display:'Pantalla',display_desc:'Resolución, Espejo, Pantallas'},
-  eu:{title:'Ezarpenak',back:'Itzuli',network:'Sarea',network_desc:'Ethernet, Wi-Fi',display:'Pantaila',display_desc:'Bereizmena, Ispilua, Pantailak'}
+  fr:{sound:'Son',sound_desc:'Sortie, Volume, Casque USB',title:'Paramètres',back:'Retour',network:'Réseau',network_desc:'Ethernet, Wi-Fi',display:'Affichage',display_desc:'Résolution, Miroir, Écrans'},
+  en:{sound:'Sound',sound_desc:'Output, Volume, USB headset',title:'Settings',back:'Back',network:'Network',network_desc:'Ethernet, Wi-Fi',display:'Display',display_desc:'Resolution, Mirror, Screens'},
+  es:{sound:'Sonido',sound_desc:'Salida, Volumen, Auriculares USB',title:'Ajustes',back:'Volver',network:'Red',network_desc:'Ethernet, Wi-Fi',display:'Pantalla',display_desc:'Resolución, Espejo, Pantallas'},
+  eu:{sound:'Soinua',sound_desc:'Irteera, Bolumena, USB entzungailuak',title:'Ezarpenak',back:'Itzuli',network:'Sarea',network_desc:'Ethernet, Wi-Fi',display:'Pantaila',display_desc:'Bereizmena, Ispilua, Pantailak'}
 };
 let lang='fr';
 function setLang(l){
@@ -70,6 +78,8 @@ function setLang(l){
   document.getElementById('lbl-network-desc').textContent=t.network_desc;
   document.getElementById('lbl-display').textContent=t.display;
   document.getElementById('lbl-display-desc').textContent=t.display_desc;
+  document.getElementById('lbl-sound').textContent=t.sound;
+  document.getElementById('lbl-sound-desc').textContent=t.sound_desc;
 }
 fetch('http://127.0.0.1:7070/settings').then(r=>r.json()).then(s=>{if(s.lang)setLang(s.lang);}).catch(()=>{});
 </script>

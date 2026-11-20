@@ -251,14 +251,139 @@ def load_settings():
     return {"lang": "fr", "usb": False}
 
 def save_settings(settings):
-    allowed = {"lang", "usb"}
-    clean = {}
+    allowed = {"lang", "usb", "screen_timeout", "sound_output", "sound_volume", "sound_mute"}
+    clean = load_settings()
     for k in allowed:
         if k in settings:
             clean[k] = settings[k]
     with open(SETTINGS_FILE, 'w') as f:
         json.dump(clean, f)
     return clean
+
+
+# ── SON (ALSA seul, sans serveur de son) ─────────────────────────────────────
+
+ASOUND_FILE = "/etc/asound.conf"
+SOUND_ENV = {'LANG': 'C', 'LC_ALL': 'C', 'PATH': '/usr/bin:/bin'}
+VOLUME_CONTROLS = ('Master', 'PCM', 'Speaker', 'Headphone', 'Headset')
+
+def list_sound_outputs():
+    """Liste les sorties de lecture ALSA : jack, HDMI, casque USB."""
+    outputs = []
+    try:
+        out = subprocess.check_output(['aplay', '-l'], text=True, env=SOUND_ENV,
+                                      stderr=subprocess.DEVNULL, timeout=5)
+    except Exception:
+        return outputs
+    rx = re.compile(r'^card (\d+): (\S+) \[([^\]]*)\], device (\d+): [^\[]*\[([^\]]*)\]')
+    for line in out.splitlines():
+        m = rx.match(line)
+        if not m:
+            continue
+        idx, card_id, card_name, dev, dev_name = m.groups()
+        usb = os.path.exists(f'/proc/asound/card{idx}/usbid')
+        if 'digital' in dev_name.lower() and not usb:
+            continue  # sortie optique S/PDIF : non proposee
+        if usb:
+            kind, label = 'usb', f'USB : {card_name}'
+        elif 'hdmi' in dev_name.lower() or 'hdmi' in card_name.lower():
+            kind, label = 'hdmi', dev_name
+        else:
+            kind, label = 'jack', 'Jack'
+        outputs.append({'id': f'{card_id}:{dev}', 'card': card_id, 'device': int(dev),
+                        'kind': kind, 'label': label})
+    return outputs
+
+def resolve_sound_output(choice, outputs=None):
+    """'auto' : casque USB s'il est branche, sinon le jack, sinon la premiere sortie."""
+    outputs = list_sound_outputs() if outputs is None else outputs
+    if not outputs:
+        return None
+    if choice and choice != 'auto':
+        for o in outputs:
+            if o['id'] == choice:
+                return o
+    for kind in ('usb', 'jack'):
+        for o in outputs:
+            if o['kind'] == kind:
+                return o
+    return outputs[0]
+
+def sound_volume_control(card):
+    try:
+        out = subprocess.check_output(['amixer', '-c', card, 'scontrols'], text=True,
+                                      env=SOUND_ENV, stderr=subprocess.DEVNULL, timeout=5)
+    except Exception:
+        return None
+    names = re.findall(r"Simple mixer control '([^']+)',0", out)
+    for c in VOLUME_CONTROLS:
+        if c in names:
+            return c
+    return None
+
+def apply_sound(settings):
+    """Ecrit /etc/asound.conf pour la sortie choisie et regle le volume."""
+    out = resolve_sound_output(settings.get('sound_output', 'auto'))
+    if not out:
+        return None
+    conf = ('# Genere par UrrunBerri OS (Parametres > Son)\n'
+            f'pcm.!default {{ type plug slave.pcm "dmix:CARD={out["card"]},DEV={out["device"]}" }}\n'
+            f'ctl.!default {{ type hw card {out["card"]} }}\n')
+    with open(ASOUND_FILE, 'w') as f:
+        f.write(conf)
+    ctrl = sound_volume_control(out['card'])
+    if ctrl:
+        vol = max(0, min(100, int(settings.get('sound_volume', 80))))
+        state = 'mute' if settings.get('sound_mute') else 'unmute'
+        subprocess.run(['amixer', '-q', '-c', out['card'], 'sset', ctrl, f'{vol}%', state],
+                       env=SOUND_ENV, capture_output=True, timeout=5)
+    return out
+
+def sound_state():
+    s = load_settings()
+    outputs = list_sound_outputs()
+    active = resolve_sound_output(s.get('sound_output', 'auto'), outputs)
+    return {'outputs': outputs,
+            'selected': s.get('sound_output', 'auto'),
+            'active': active['id'] if active else None,
+            'has_volume': bool(active and sound_volume_control(active['card'])),
+            'volume': int(s.get('sound_volume', 80)),
+            'mute': bool(s.get('sound_mute', False))}
+
+def sound_test():
+    subprocess.Popen(['speaker-test', '-D', 'default', '-c', '2', '-t', 'sine', '-f', '440', '-l', '1'],
+                     env=SOUND_ENV, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+# ── VEILLE DE L'ECRAN ────────────────────────────────────────────────────────
+
+SCREEN_TIMEOUTS = (0, 30, 60)  # minutes, 0 = toujours allume
+
+def apply_screen_timeout(minutes):
+    minutes = int(minutes) if str(minutes).isdigit() else 0
+    if minutes not in SCREEN_TIMEOUTS:
+        minutes = 0
+    if minutes == 0:
+        cmds = [['xset', 's', 'off'], ['xset', 's', 'noblank'], ['xset', '-dpms']]
+    else:
+        sec = str(minutes * 60)
+        cmds = [['xset', 's', sec, sec], ['xset', 's', 'blank'],
+                ['xset', '+dpms'], ['xset', 'dpms', sec, sec, sec]]
+    for c in cmds:
+        subprocess.run(c, env=XENV, capture_output=True, timeout=5)
+    return minutes
+
+def apply_saved_settings():
+    """Reapplique veille et son au demarrage du serveur (donc a chaque boot)."""
+    s = load_settings()
+    try:
+        apply_screen_timeout(s.get('screen_timeout', 0))
+    except Exception:
+        pass
+    try:
+        apply_sound(s)
+    except Exception:
+        pass
 
 def test_connection(host, port):
     # Sanitize before passing to subprocess
@@ -426,6 +551,41 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
                 self.send_cors('error: ' + str(e))
             return
 
+        if path == '/sound-apply':
+            outputs = list_sound_outputs()
+            choice = str(data.get('output', 'auto'))
+            if choice != 'auto' and choice not in [o['id'] for o in outputs]:
+                choice = 'auto'
+            try:
+                vol = max(0, min(100, int(data.get('volume', 80))))
+            except (TypeError, ValueError):
+                vol = 80
+            mute = data.get('mute') in (True, 'true', '1', 1)
+            s = save_settings({'sound_output': choice, 'sound_volume': vol, 'sound_mute': mute})
+            try:
+                apply_sound(s)
+                self.send_json(dict(sound_state(), ok=True))
+            except Exception as e:
+                self.send_json({'ok': False, 'error': str(e)})
+            return
+
+        if path == '/sound-test':
+            try:
+                sound_test()
+                self.send_cors('ok')
+            except Exception:
+                self.send_cors('error')
+            return
+
+        if path == '/screen-timeout':
+            try:
+                m = apply_screen_timeout(data.get('minutes', 0))
+                save_settings({'screen_timeout': m})
+                self.send_cors('ok')
+            except Exception:
+                self.send_cors('error')
+            return
+
         if path == '/wifi-disconnect':
             try:
                 subprocess.run(['nmcli', 'device', 'disconnect', (wifi_iface() or 'wlp1s0')], capture_output=True, text=True)
@@ -542,11 +702,19 @@ class UrrunBerriHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(list_screens())
             return
 
+        if path == '/sound':
+            try:
+                apply_sound(load_settings())
+            except Exception:
+                pass
+            self.send_json(sound_state())
+            return
+
         if path == '/wifi-devices':
             self.send_json(wifi_devices())
             return
 
-        if path in ('/splash/parametres.html', '/splash/network.html', '/splash/affichage.html'):
+        if path in ('/splash/parametres.html', '/splash/network.html', '/splash/affichage.html', '/splash/son.html'):
             # Chaque page sert son propre fichier (affichage.html servait network.html par erreur)
             fname = os.path.basename(path)
             try:
@@ -838,6 +1006,7 @@ def run():
     os.makedirs('/etc/urrunberri-os', exist_ok=True)
     if not os.path.exists(SAVED_FILE):
         open(SAVED_FILE, 'w').close()
+    apply_saved_settings()
     server = http.server.HTTPServer(('127.0.0.1', PORT), UrrunBerriHandler)
     print(f"[UrrunBerri OS] API server running on port {PORT} (hardened)")
     server.serve_forever()
